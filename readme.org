@@ -4,6 +4,8 @@
 * Emacs
 Emacs literate configuration.
 
+I'm using Emacs 29.1 and Windows 11.
+
 ** Globals
 #+begin_src emacs-lisp
   (setq user-full-name "Gabriel Rosa"
