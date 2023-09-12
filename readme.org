@@ -8,16 +8,16 @@ I'm using Emacs 29.1 and Windows 11.
 
 ** Globals
 #+begin_src emacs-lisp
-  (setq user-full-name "Gabriel Rosa"
-        user-mail-address "gabr1sr@proton.me")
+(setq user-full-name "Gabriel Rosa"
+      user-mail-address "gabr1sr@proton.me")
 #+end_src
   
 ** Encoding
 Setting coding system and language environment to UTF-8.
   
 #+begin_src emacs-lisp
-  (prefer-coding-system 'utf-8-unix)
-  (set-language-environment "UTF-8")
+(prefer-coding-system 'utf-8-unix)
+(set-language-environment "UTF-8")
 #+end_src
 
 ** Directories
@@ -28,35 +28,35 @@ Define cache, backup and auto-save directories.
 - Set autosave directory to ~autosave~ inside emacs config dir
 
 #+begin_src emacs-lisp
-  (defvar user-cache-directory (expand-file-name ".cache" user-emacs-directory))
-  (defvar user-backup-directory (expand-file-name "backup" user-emacs-directory))
-  (defvar user-autosave-directory (expand-file-name "autosave" user-emacs-directory))
+(defvar user-cache-directory (expand-file-name ".cache" user-emacs-directory))
+(defvar user-backup-directory (expand-file-name "backup" user-emacs-directory))
+(defvar user-autosave-directory (expand-file-name "autosave" user-emacs-directory))
 #+end_src
 
 Create these directories if doesn't exist.
 
 #+begin_src emacs-lisp
-  (dolist (dir (list user-cache-directory user-backup-directory user-autosave-directory))
-    (when (not (file-directory-p dir))
-      (make-directory dir t)))
+(dolist (dir (list user-cache-directory user-backup-directory user-autosave-directory))
+  (when (not (file-directory-p dir))
+    (make-directory dir t)))
 #+end_src
 
 Config directories according to [[https://emacs.stackexchange.com/a/36][this Stack Exchange answer]].
 
 #+begin_src emacs-lisp
-  (setq backup-directory-alist `(("." . ,user-backup-directory))
-        auto-save-filename-transforms `(("." ,user-autosave-directory t))
-        auto-save-list-file-prefix (concat user-autosave-directory ".saves-")
-        tramp-backup-directory-alist `((".*" . ,user-backup-directory))
-        tramp-auto-save-directory user-autosave-directory)
+(setq backup-directory-alist `(("." . ,user-backup-directory))
+      auto-save-filename-transforms `(("." ,user-autosave-directory t))
+      auto-save-list-file-prefix (concat user-autosave-directory ".saves-")
+      tramp-backup-directory-alist `((".*" . ,user-backup-directory))
+      tramp-auto-save-directory user-autosave-directory)
 #+end_src
 
 ** Custom
 Load custom file.
 
 #+begin_src emacs-lisp
-  (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
-  (ignore-errors (load custom-file))
+(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+(ignore-errors (load custom-file))
 #+end_src
 
 ** Fonts
@@ -65,7 +65,7 @@ Config custom fonts.
 - Set default font to *JetBrains Mono*
 
 #+begin_src emacs-lisp
-  (set-face-attribute 'default nil :font "JetBrains Mono" :height 100 :weight 'regular)
+(set-face-attribute 'default nil :font "JetBrains Mono" :height 100 :weight 'regular)
 #+end_src
 
 ** Startup
@@ -75,8 +75,8 @@ Startup configurations.
 - Hide startup message
 
 #+begin_src emacs-lisp
-  (setq load-prefer-newer t
-        inhibit-startup-message t)
+(setq load-prefer-newer t
+      inhibit-startup-message t)
 #+end_src
 
 ** Appearance
@@ -88,18 +88,18 @@ Appearence configurations.
 - Hide tool bar
 
 #+begin_src emacs-lisp
-  (global-display-line-numbers-mode 1)
-  (scroll-bar-mode -1)
-  (menu-bar-mode -1)
-  (tool-bar-mode -1)
+(global-display-line-numbers-mode 1)
+(scroll-bar-mode -1)
+(menu-bar-mode -1)
+(tool-bar-mode -1)
 #+end_src
 
 ** Electric
 Built-in package to easily insert matching delimiters.
 
 #+begin_src emacs-lisp
-  (when (fboundp 'electric-pair-mode)
-    (electric-pair-mode t))
+(when (fboundp 'electric-pair-mode)
+  (electric-pair-mode t))
 #+end_src
 
 ** Tree-Sitter
@@ -110,21 +110,47 @@ You will need a C Compiler and C++ Compiler to install tree-sitter support for e
 Use ~M-x treesit-install-language-grammar~ and language name to install syntax for specific languages.
 
 #+begin_src emacs-lisp
-  (setq treesit-language-source-alist
-        '((solidity "https://github.com/JoranHonig/tree-sitter-solidity")
-          (python "https://github.com/tree-sitter/tree-sitter-python")
-          (c "https://github.com/tree-sitter/tree-sitter-c")))
+(setq treesit-language-source-alist
+      '((solidity "https://github.com/JoranHonig/tree-sitter-solidity")
+        (python "https://github.com/tree-sitter/tree-sitter-python")
+        (c "https://github.com/tree-sitter/tree-sitter-c")))
 #+end_src
 
 * Packages
 Adding *Melpa* repositories.
 
 #+begin_src emacs-lisp
-  (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
-  (add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/"))
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
+(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/"))
 #+end_src
 
 Use ~use-package~ to retrieve and config packages.
+
+** Theme
+Theme packages.
+
+*** Doom Theme
+Doom Emacs theme.
+
+#+begin_src emacs-lisp
+(use-package doom-themes
+  :ensure t
+  :config
+  (setq doom-themes-enable-bold t
+        doom-themes-enable-italic t)
+  (load-theme 'doom-one t)
+  (doom-themes-treemacs-config)
+  (doom-themes-org-config))
+#+end_src
+
+*** Doom Modeline
+Doom Emacs modeline.
+
+#+begin_src emacs-lisp
+(use-package doom-modeline
+  :ensure t
+  :hook (after-init . doom-modeline-mode))
+#+end_src
 
 ** Completion
 Packages for completion.
@@ -133,20 +159,20 @@ Packages for completion.
 Text completion framework for Emacs.
 
 #+begin_src emacs-lisp
-  (use-package company
-    :ensure t
-    :hook (after-init . global-company-mode))
+(use-package company
+  :ensure t
+  :hook (after-init . global-company-mode))
 #+end_src
 
 *** Which-key
 Minor mode for Emacs that displays the key bindings following your currently entered incomplete command (a prefix) in a popup.
 
 #+begin_src emacs-lisp
-  (use-package which-key
-    :ensure t
-    :hook (after-init . which-key-mode)
-    :config
-    (which-key-setup-side-window-bottom))
+(use-package which-key
+  :ensure t
+  :hook (after-init . which-key-mode)
+  :config
+  (which-key-setup-side-window-bottom))
 #+end_src
 
 *** Vertico
@@ -155,32 +181,32 @@ Vertical interactive completion for Emacs.
 Replaces ~ivy~ and ~helm~.
 
 #+begin_src emacs-lisp
-  (use-package vertico
-   :ensure t
-   :init
-   (vertico-mode)
-   :custom
-   (vertico-cycle t)
-   :bind
-   (:map vertico-map
-         ("C-j" . vertico-next)
-         ("C-k" . vertico-previous)
-         ("C-f" . vertico-exit)
-         :map minibuffer-local-map
-         ("M-h" . backward-kill-word)))
+ (use-package vertico
+  :ensure t
+  :init
+  (vertico-mode)
+  :custom
+  (vertico-cycle t)
+  :bind
+  (:map vertico-map
+        ("C-j" . vertico-next)
+        ("C-k" . vertico-previous)
+        ("C-f" . vertico-exit)
+        :map minibuffer-local-map
+        ("M-h" . backward-kill-word)))
 
- (use-package savehist
-   :init
-   (savehist-mode))
+(use-package savehist
+  :init
+  (savehist-mode))
 
- (use-package marginalia
-   :ensure t
-   :after (vertico)
-   :init
-   (marginalia-mode)
-   :custom
-   (marginalia-annotators
-    '(marginalia-annotators-heavy marginalia-annotators-light nil)))
+(use-package marginalia
+  :ensure t
+  :after (vertico)
+  :init
+  (marginalia-mode)
+  :custom
+  (marginalia-annotators
+   '(marginalia-annotators-heavy marginalia-annotators-light nil)))
 #+end_src
 
 ** Checks
@@ -190,22 +216,22 @@ Packages for code checking and more.
 Syntax checking for Emacs.
 
 #+begin_src emacs-lisp
-  (use-package flycheck
-    :ensure t
-    :init
-    (global-flycheck-mode))
+(use-package flycheck
+  :ensure t
+  :init
+  (global-flycheck-mode))
 
-  (use-package flycheck-popup-tip
-    :ensure t
-    :after (flycheck)
-    :hook (flycheck-mode . flycheck-popup-tip-mode)
-    :config
-    (setq flycheck-popup-tip-error-prefix "X "))
+(use-package flycheck-popup-tip
+  :ensure t
+  :after (flycheck)
+  :hook (flycheck-mode . flycheck-popup-tip-mode)
+  :config
+  (setq flycheck-popup-tip-error-prefix "X "))
 
-  (use-package flycheck-posframe
-    :ensure t
-    :after (flycheck)
-    :hook (flycheck-mode . flycheck-posframe-mode))
+(use-package flycheck-posframe
+  :ensure t
+  :after (flycheck)
+  :hook (flycheck-mode . flycheck-posframe-mode))
 #+end_src
 
 ** Projects
@@ -215,224 +241,226 @@ Packages for project management and navigation.
 Git for Emacs.
 
 #+begin_src emacs-lisp
-  (use-package magit
-    :ensure t
-    :custom
-    (magit-display-buffer-function 'magit-display-buffer-fullframe-status-topleft-v1)
-    (magit-bury-buffer-function 'magit-restore-window-configuration))
+(use-package magit
+  :ensure t
+  :custom
+  (magit-display-buffer-function 'magit-display-buffer-fullframe-status-topleft-v1)
+  (magit-bury-buffer-function 'magit-restore-window-configuration))
 
-  (use-package magit-todos
-    :ensure t)
+(use-package magit-todos
+  :ensure t)
 #+end_src
 
 *** Projectile
 Project navigation and management library for Emacs.
 
 #+begin_src emacs-lisp
-  (use-package projectile
-    :ensure t
-    :init
-    (projectile-mode)
-    :bind-keymap
-    ("C-c p" . projectile-command-map))
+(use-package projectile
+  :ensure t
+  :init
+  (projectile-mode)
+  :bind-keymap
+  ("C-c p" . projectile-command-map))
 #+end_src
 
 *** Treemacs
 Tree layout file explorer for Emacs.
 
 #+begin_src emacs-lisp
-  (use-package treemacs
-    :ensure t
-    :defer t
-    :init
-    (with-eval-after-load 'winum
-      (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
-    :config
-    (progn
-      (setq treemacs-collapse-dirs                   (if treemacs-python-executable 3 0)
-            treemacs-deferred-git-apply-delay        0.5
-            treemacs-directory-name-transformer      #'identity
-            treemacs-display-in-side-window          t
-            treemacs-eldoc-display                   'simple
-            treemacs-file-event-delay                2000
-            treemacs-file-extension-regex            treemacs-last-period-regex-value
-            treemacs-file-follow-delay               0.2
-            treemacs-file-name-transformer           #'identity
-            treemacs-follow-after-init               t
-            treemacs-expand-after-init               t
-            treemacs-find-workspace-method           'find-for-file-or-pick-first
-            treemacs-git-command-pipe                ""
-            treemacs-goto-tag-strategy               'refetch-index
-            treemacs-header-scroll-indicators        '(nil . "^^^^^^")
-            treemacs-hide-dot-git-directory          t
-            treemacs-indentation                     2
-            treemacs-indentation-string              " "
-            treemacs-is-never-other-window           nil
-            treemacs-max-git-entries                 5000
-            treemacs-missing-project-action          'ask
-            treemacs-move-forward-on-expand          nil
-            treemacs-no-png-images                   nil
-            treemacs-no-delete-other-windows         t
-            treemacs-project-follow-cleanup          nil
-            treemacs-persist-file                    (expand-file-name ".cache/treemacs-persist" user-emacs-directory)
-            treemacs-position                        'left
-            treemacs-read-string-input               'from-child-frame
-            treemacs-recenter-distance               0.1
-            treemacs-recenter-after-file-follow      nil
-            treemacs-recenter-after-tag-follow       nil
-            treemacs-recenter-after-project-jump     'always
-            treemacs-recenter-after-project-expand   'on-distance
-            treemacs-litter-directories              '("/node_modules" "/.venv" "/.cask")
-            treemacs-project-follow-into-home        nil
-            treemacs-show-cursor                     nil
-            treemacs-show-hidden-files               t
-            treemacs-silent-filewatch                nil
-            treemacs-silent-refresh                  nil
-            treemacs-sorting                         'alphabetic-asc
-            treemacs-select-when-already-in-treemacs 'move-back
-            treemacs-space-between-root-nodes        t
-            treemacs-tag-follow-cleanup              t
-            treemacs-tag-follow-delay                1.5
-            treemacs-text-scale                      nil
-            treemacs-user-mode-line-format           nil
-            treemacs-user-header-line-format         nil
-            treemacs-wide-toggle-width               70
-            treemacs-width                           35
-            treemacs-width-increment                 1
-            treemacs-width-is-initially-locked       t
-            treemacs-workspace-switch-cleanup        nil)
+(use-package treemacs
+  :ensure t
+  :defer t
+  :init
+  (with-eval-after-load 'winum
+    (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
+  :config
+  (progn
+    (setq treemacs-collapse-dirs                   (if treemacs-python-executable 3 0)
+          treemacs-deferred-git-apply-delay        0.5
+          treemacs-directory-name-transformer      #'identity
+          treemacs-display-in-side-window          t
+          treemacs-eldoc-display                   'simple
+          treemacs-file-event-delay                2000
+          treemacs-file-extension-regex            treemacs-last-period-regex-value
+          treemacs-file-follow-delay               0.2
+          treemacs-file-name-transformer           #'identity
+          treemacs-follow-after-init               t
+          treemacs-expand-after-init               t
+          treemacs-find-workspace-method           'find-for-file-or-pick-first
+          treemacs-git-command-pipe                ""
+          treemacs-goto-tag-strategy               'refetch-index
+          treemacs-header-scroll-indicators        '(nil . "^^^^^^")
+          treemacs-hide-dot-git-directory          t
+          treemacs-indentation                     2
+          treemacs-indentation-string              " "
+          treemacs-is-never-other-window           nil
+          treemacs-max-git-entries                 5000
+          treemacs-missing-project-action          'ask
+          treemacs-move-forward-on-expand          nil
+          treemacs-no-png-images                   nil
+          treemacs-no-delete-other-windows         t
+          treemacs-project-follow-cleanup          nil
+          treemacs-persist-file                    (expand-file-name ".cache/treemacs-persist" user-emacs-directory)
+          treemacs-position                        'left
+          treemacs-read-string-input               'from-child-frame
+          treemacs-recenter-distance               0.1
+          treemacs-recenter-after-file-follow      nil
+          treemacs-recenter-after-tag-follow       nil
+          treemacs-recenter-after-project-jump     'always
+          treemacs-recenter-after-project-expand   'on-distance
+          treemacs-litter-directories              '("/node_modules" "/.venv" "/.cask")
+          treemacs-project-follow-into-home        nil
+          treemacs-show-cursor                     nil
+          treemacs-show-hidden-files               t
+          treemacs-silent-filewatch                nil
+          treemacs-silent-refresh                  nil
+          treemacs-sorting                         'alphabetic-asc
+          treemacs-select-when-already-in-treemacs 'move-back
+          treemacs-space-between-root-nodes        t
+          treemacs-tag-follow-cleanup              t
+          treemacs-tag-follow-delay                1.5
+          treemacs-text-scale                      nil
+          treemacs-user-mode-line-format           nil
+          treemacs-user-header-line-format         nil
+          treemacs-wide-toggle-width               70
+          treemacs-width                           35
+          treemacs-width-increment                 1
+          treemacs-width-is-initially-locked       t
+          treemacs-workspace-switch-cleanup        nil)
 
-      ;; The default width and height of the icons is 22 pixels. If you are
-      ;; using a Hi-DPI display, uncomment this to double the icon size.
-      ;;(treemacs-resize-icons 44)
+    ;; The default width and height of the icons is 22 pixels. If you are
+    ;; using a Hi-DPI display, uncomment this to double the icon size.
+    ;;(treemacs-resize-icons 44)
 
-      (treemacs-follow-mode t)
-      (treemacs-filewatch-mode t)
-      (treemacs-fringe-indicator-mode 'always)
-      (when treemacs-python-executable
-        (treemacs-git-commit-diff-mode t))
+    (treemacs-follow-mode t)
+    (treemacs-filewatch-mode t)
+    (treemacs-fringe-indicator-mode 'always)
+    (when treemacs-python-executable
+      (treemacs-git-commit-diff-mode t))
 
-      (pcase (cons (not (null (executable-find "git")))
-                   (not (null treemacs-python-executable)))
-        (`(t . t)
-         (treemacs-git-mode 'deferred))
-        (`(t . _)
-         (treemacs-git-mode 'simple)))
+    (pcase (cons (not (null (executable-find "git")))
+                 (not (null treemacs-python-executable)))
+      (`(t . t)
+       (treemacs-git-mode 'deferred))
+      (`(t . _)
+       (treemacs-git-mode 'simple)))
 
-      (treemacs-hide-gitignored-files-mode nil))
-    :bind
-    (:map global-map
-          ("M-0"       . treemacs-select-window)
-          ("C-x t 1"   . treemacs-delete-other-windows)
-          ("C-x t t"   . treemacs)
-          ("C-x t d"   . treemacs-select-directory)
-          ("C-x t B"   . treemacs-bookmark)
-          ("C-x t C-t" . treemacs-find-file)
-          ("C-x t M-t" . treemacs-find-tag)))
+    (treemacs-hide-gitignored-files-mode nil))
+  :bind
+  (:map global-map
+        ("M-0"       . treemacs-select-window)
+        ("C-x t 1"   . treemacs-delete-other-windows)
+        ("C-x t t"   . treemacs)
+        ("C-x t d"   . treemacs-select-directory)
+        ("C-x t B"   . treemacs-bookmark)
+        ("C-x t C-t" . treemacs-find-file)
+        ("C-x t M-t" . treemacs-find-tag)))
 
-  (use-package treemacs-projectile
-    :ensure t
-    :after (treemacs projectile))
+(use-package treemacs-projectile
+  :ensure t
+  :after (treemacs projectile))
 
-  (use-package treemacs-magit
-    :ensure t
-    :after (treemacs magit))
+(use-package treemacs-magit
+  :ensure t
+  :after (treemacs magit))
 #+end_src
 
 ** Org-mode
 Org-mode configuration and packages.
 
 #+begin_src emacs-lisp
-  (use-package org
-    :config
-    (setq org-directory (file-truename "~/org/")
-          org-todo-keywords '((sequence "TODO(t)" "DONE(d!)" "CANCELED(c@)"))
-          org-agenda-files '("habits.org")
-          org-startup-truncated nil
-          org-startup-indented t)
-    (add-to-list 'org-modules 'org-habit)
-    :bind
-    (("C-c a" . org-agenda)
-     ("C-c l" . org-store-link)
-     ("C-c c" . org-capture)))
+(use-package org
+  :config
+  (setq org-directory (file-truename "~/org/")
+        org-todo-keywords '((sequence "TODO(t)" "DONE(d!)" "CANCELED(c@)"))
+        org-agenda-files '("habits.org")
+        org-startup-truncated nil
+        org-startup-indented t
+        org-src-preserve-indentation nil
+        org-edit-src-content-indentation 0)
+  (add-to-list 'org-modules 'org-habit)
+  :bind
+  (("C-c a" . org-agenda)
+   ("C-c l" . org-store-link)
+   ("C-c c" . org-capture)))
 #+end_src
 
 *** Org Roam
 Personal knowledge management system for Org-mode.
 
 #+begin_src emacs-lisp
-  (use-package org-roam
-    :ensure t
-    :after (org)
-    :custom
-    (org-roam-directory (file-truename "~/org/roam/"))
-    (org-roam-complete-everywhere t)
-    (org-roam-capture-templates
-     '(("d" "default" plain "%?"
-        :if-new (file+head "${slug}.org" "#+title: ${title}\n#+date: %<%Y-%m-%d>\n")
-        :unnarrowed t)
+(use-package org-roam
+  :ensure t
+  :after (org)
+  :custom
+  (org-roam-directory (file-truename "~/org/roam/"))
+  (org-roam-complete-everywhere t)
+  (org-roam-capture-templates
+   '(("d" "default" plain "%?"
+      :if-new (file+head "${slug}.org" "#+title: ${title}\n#+date: %<%Y-%m-%d>\n")
+      :unnarrowed t)
 
-       ("z" "zettel" plain
-        (file "~/org/templates/zettel.org")
-        :if-new (file+head "${slug}.org" "#+title: ${title}\n#+date: %<%Y-%m-%d>\n")
-        :unarrowed t)))
-    :bind
-    (("C-c n l" . org-roam-buffer-toggle)
-     ("C-c n f" . org-roam-node-find)
-     ("C-c n g" . org-roam-graph)
-     ("C-c n i" . org-roam-node-insert)
-     ("C-c n c" . org-roam-node-capture)
-     ("C-c n u" . org-roam-ui-mode))
-    :bind-keymap
-    ("C-c n d" . org-roam-dailies-map)
-    :config
-    (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
-    (org-roam-db-autosync-enable))
+     ("z" "zettel" plain
+      (file "~/org/templates/zettel.org")
+      :if-new (file+head "${slug}.org" "#+title: ${title}\n#+date: %<%Y-%m-%d>\n")
+      :unarrowed t)))
+  :bind
+  (("C-c n l" . org-roam-buffer-toggle)
+   ("C-c n f" . org-roam-node-find)
+   ("C-c n g" . org-roam-graph)
+   ("C-c n i" . org-roam-node-insert)
+   ("C-c n c" . org-roam-node-capture)
+   ("C-c n u" . org-roam-ui-mode))
+  :bind-keymap
+  ("C-c n d" . org-roam-dailies-map)
+  :config
+  (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
+  (org-roam-db-autosync-enable))
 #+end_src
 
 **** Templates
 ***** zettel.org
 #+begin_src org :tangle ~/org/templates/zettel.org :mkdirp yes
-  - tags :: 
-  - source ::
+- tags :: 
+- source ::
 #+end_src
 
 *** Org Roam UI
 Graphical front-end for exploring your org-roam Zettelkasten.
 
 #+begin_src emacs-lisp
-  (use-package org-roam-ui
-    :ensure t
-    :after (org-roam)
-    :config
-    (setq org-roam-ui-sync-theme t
-          org-roam-ui-follow t
-          org-roam-ui-update-on-save t
-          org-roam-ui-open-on-start t))
+(use-package org-roam-ui
+  :ensure t
+  :after (org-roam)
+  :config
+  (setq org-roam-ui-sync-theme t
+        org-roam-ui-follow t
+        org-roam-ui-update-on-save t
+        org-roam-ui-open-on-start t))
 #+end_src
 
 *** Org Journal
 Org-mode based journaling mode.
 
 #+begin_src emacs-lisp
-  (use-package org-journal
-    :ensure t
-    :defer t
-    :init
-    :config
-    (setq org-journal-dir (file-truename "~/org/journal/")
-          org-journal-file-format "%Y-%m-%d.org"
-          org-journal-date-format "%A, %d %B %Y"
-          org-journal-date-prefix "#+title: "
-          org-journal-time-prefix "* "
-          org-journal-enable-agenda-integration t)
-    (setq org-agenda-file-regexp "\\`\\\([^.].*\\.org\\\|[0-9]\\\{8\\\}\\\(\\.gpg\\\)?\\\)\\'")
-    (add-to-list 'org-agenda-files org-journal-dir)
-    :bind
-    (("C-c n j f" . org-journal-next-entry)
-     ("C-c n j b" . org-journal-previous-entry)
-     ("C-c n j j" . org-journal-new-entry)
-     ("C-c n j s" . org-journal-search)))
+(use-package org-journal
+  :ensure t
+  :defer t
+  :init
+  :config
+  (setq org-journal-dir (file-truename "~/org/journal/")
+        org-journal-file-format "%Y-%m-%d.org"
+        org-journal-date-format "%A, %d %B %Y"
+        org-journal-date-prefix "#+title: "
+        org-journal-time-prefix "* "
+        org-journal-enable-agenda-integration t)
+  (setq org-agenda-file-regexp "\\`\\\([^.].*\\.org\\\|[0-9]\\\{8\\\}\\\(\\.gpg\\\)?\\\)\\'")
+  (add-to-list 'org-agenda-files org-journal-dir)
+  :bind
+  (("C-c n j f" . org-journal-next-entry)
+   ("C-c n j b" . org-journal-previous-entry)
+   ("C-c n j j" . org-journal-new-entry)
+   ("C-c n j s" . org-journal-search)))
 #+end_src
 
 ** Languages
@@ -444,16 +472,16 @@ Language server client built-in since Emacs 29.
 - Solidity support
 
 #+begin_src emacs-lisp
-                    (use-package eglot
-                      :hook ((solidity-mode . eglot-ensure))
-                      :config
-                      (setq-default eglot-workspace-configuration
-                                    `((solidity
-                                       (defaultCompiler . "remote")
-                                       (compileUsingRemoteVersion . "latest")
-                                       (compileUsingLocalVersion . "~/bin/soljson.js"))))
-                      (add-to-list 'eglot-server-programs
-                                   `(solidity-mode . ("vscode-solidity-server" "--stdio"))))
+(use-package eglot
+  :hook ((solidity-mode . eglot-ensure))
+  :config
+  (setq-default eglot-workspace-configuration
+                `((solidity
+                   (defaultCompiler . "remote")
+                   (compileUsingRemoteVersion . "latest")
+                   (compileUsingLocalVersion . "~/bin/soljson.js"))))
+  (add-to-list 'eglot-server-programs
+               `(solidity-mode . ("vscode-solidity-server" "--stdio"))))
 #+end_src
 
 *** Solidity
@@ -464,8 +492,8 @@ You will need to clone [[https://github.com/juanfranblanco/vscode-solidity][this
 Later, get a ~soljson.js~ from [[https://github.com/ethereum/solidity/releases][Solidity releases]] and put in ~$HOME/bin/soljson.js~.
 
 #+begin_src emacs-lisp
-  (use-package solidity-mode
-    :ensure t
-    :custom
-    (solidity-comment-style 'slash))
+(use-package solidity-mode
+  :ensure t
+  :custom
+  (solidity-comment-style 'slash))
 #+end_src
