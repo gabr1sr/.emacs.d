@@ -10,7 +10,7 @@
 
 ** Global
 #+begin_src emacs-lisp
-(setq global--bibliography-list '("~/org/biblio/books.org"))
+(setq global--bibliography-list '("~/org/biblio/books.bib"))
 #+end_src
 
 ** Encoding
@@ -92,20 +92,32 @@
 #+begin_src emacs-lisp
 (use-package org
   :config
-  (require 'ob-js)
-  (setq org-babel-load-languages
-	      '((emacs-lisp . t)
-		(js . t)))
+  ;; Org Babel
+  (setq org-babel-load-languages '((emacs-lisp . t)))
   (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)
-  (add-to-list 'org-babel-tangle-lang-exts '("js" . "js"))
   (add-to-list 'org-modules 'org-habit)
+  ;; Org
   (setq org-directory (file-truename "~/org/")
-	      org-todo-keywords '((sequence "TODO(t)" "DONE(d!)" "CANCELED(c@)"))
-	      org-agenda-files '("habits.org")
+	      org-todo-keywords '((sequence "TODO(t)" "|" "DONE(d!)" "CANCELED(c@)"))
+	      org-agenda-files '("habits.org" "tasks.org")
 	      org-startup-truncated nil
 	      org-startup-indented t
 	      org-src-preserve-indentation nil
-	      org-edit-src-content-indentation 0)
+	      org-edit-src-content-indentation 0
+	      org-agenda-start-with-log-mode t
+	      org-log-done 'time
+	      org-log-into-drawer t
+	      org-capture-templates
+	      '(("t" "Tasks")
+		("tt" "Task" entry (file+olp "~/org/tasks.org" "Inbox")
+		 "* TODO %?\n%U\n%i"
+		 :empty-lines 1)
+		("tl" "Located Task" entry (file+olp "~/org/tasks.org" "Inbox")
+		 "* TODO %?\n%U\n%a\n%i"
+		 :empty-lines 1)
+		("ts" "Scheduled Task" entry (file+olp "~/org/tasks.org" "Inbox")
+		 "* TODO %?\nSCHEDULED: %^t\n%i"
+		 :empty-lines 1)))
   :bind
   ("C-c a" . org-agenda)
   ("C-c l" . org-store-link)
@@ -495,7 +507,10 @@
   :hook (js-ts-mode . eglot-ensure)
   :hook (javascript-mode . js-ts-mode)
   :config
-  (add-to-list 'eglot-server-programs '(js-ts-mode . ("typescript-language-server" "--stdio"))))
+  (add-to-list 'eglot-server-programs '(js-ts-mode . ("typescript-language-server" "--stdio")))
+  (require 'ob-js)
+  (add-to-list 'org-babel-load-languages '(js . t))
+  (add-to-list 'org-babel-tangle-lang-exts '("js" . "js")))
 
 (use-package js-jsx-mode
   :mode ("\\.jsx\\'" . js-jsx-mode)
