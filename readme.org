@@ -461,7 +461,10 @@
   (magit-bury-buffer-function 'magit-restore-window-configuration))
 
 (use-package magit-todos
-  :ensure t)
+  :ensure t
+  :config
+  (setq magit-todos-nice nil
+	      magit-todos-scanner 'magit-todos--scan-with-git-grep))
 #+end_src
 
 *** Projectile
