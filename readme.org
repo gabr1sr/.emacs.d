@@ -116,7 +116,7 @@
 		 "* TODO %?\n%U\n%a\n%i"
 		 :empty-lines 1)
 		("ts" "Scheduled Task" entry (file+olp "~/org/tasks.org" "Inbox")
-		 "* TODO %?\nSCHEDULED: %^t\n%i"
+		 "* TODO %?\nSCHEDULED: %^t\n%U\n%i"
 		 :empty-lines 1)))
   :bind
   ("C-c a" . org-agenda)
