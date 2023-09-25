@@ -1,16 +1,24 @@
 #+title: Emacs Configuration
 #+property: header-args:emacs-lisp :tangle ~/.emacs.d/init.el
 
-* Vanilla
+* Configuration
+
+** Global
+#+begin_src emacs-lisp
+(setq global/bibliography-list '("~/org/biblio/books.bib"))
+#+end_src
+
 ** Git
 #+begin_src emacs-lisp
 (setq user-full-name "Gabriel Rosa"
       user-mail-address "gabr1sr@proton.me")
 #+end_src
 
-** Global
+** MELPA
 #+begin_src emacs-lisp
-(setq global--bibliography-list '("~/org/biblio/books.bib"))
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 #+end_src
 
 ** Encoding
@@ -31,22 +39,9 @@
 (tool-bar-mode -1)
 #+end_src
 
-** Compatibility
-#+begin_src emacs-lisp
-(dolist (mode '(pdf-view-mode-hook))
-  (add-hook mode (lambda () (display-line-numbers-mode 0))))
-#+end_src
-
 ** Fonts
 #+begin_src emacs-lisp
 (set-face-attribute 'default nil :font "JetBrains Mono" :height 100 :weight 'regular)
-#+end_src
-
-** Melpa
-#+begin_src emacs-lisp
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 #+end_src
 
 ** Custom
@@ -75,291 +70,9 @@
   (electric-pair-mode t))
 #+end_src
 
-** Eglot
-#+begin_src emacs-lisp
-(use-package eglot
-  :config
-  (setq-default eglot-workspace-configuration
-		    `((solidity
-		       (defaultCompiler . "remote")
-		       (compileUsingRemoteVersion . "latest")
-		       (compilerUsingLocalVersion . "~/bin/soljson.js")))))
-#+end_src
-
 * Packages
-** Org
-*** Org-mode
-#+begin_src emacs-lisp
-(use-package org
-  :config
-  ;; Org Babel
-  (setq org-babel-load-languages '((emacs-lisp . t)))
-  (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)
-  (add-to-list 'org-modules 'org-habit)
-  ;; Org
-  (setq org-directory (file-truename "~/org/")
-	      org-todo-keywords '((sequence "TODO(t)" "|" "DONE(d!)" "CANCELED(c@)"))
-	      org-agenda-files '("habits.org" "tasks.org")
-	      org-startup-truncated nil
-	      org-startup-indented t
-	      org-src-preserve-indentation nil
-	      org-edit-src-content-indentation 0
-	      org-agenda-start-with-log-mode t
-	      org-log-done 'time
-	      org-log-into-drawer t
-	      org-capture-templates
-	      '(("t" "Tasks")
-		("tt" "Task" entry (file+olp "~/org/tasks.org" "Inbox")
-		 "* TODO %?\n%U\n%i"
-		 :empty-lines 1)
-		("tl" "Located Task" entry (file+olp "~/org/tasks.org" "Inbox")
-		 "* TODO %?\n%U\n%a\n%i"
-		 :empty-lines 1)
-		("ts" "Scheduled Task" entry (file+olp "~/org/tasks.org" "Inbox")
-		 "* TODO %?\nSCHEDULED: %^t\n%U\n%i"
-		 :empty-lines 1)))
-  :bind
-  ("C-c a" . org-agenda)
-  ("C-c l" . org-store-link)
-  ("C-c c" . org-capture))
-#+end_src
 
-*** Org Roam
-#+begin_src emacs-lisp
-(use-package org-roam
-  :ensure t
-  :custom
-  (org-roam-directory (file-truename "~/org/roam/"))
-  (org-roam-complete-everywhere t)
-  (org-roam-capture-templates
-   '(("d" "default" plain "%?"
-      :if-new (file+head "${slug}.org" "#+title: ${title}\n#+date: %<%Y-%m-%d>\n")
-      :unnarrowed t)
-
-     ("z" "zettel" plain
-      (file "~/org/templates/zettel.org")
-      :if-new (file+head "${slug}.org" "#+title: ${title}\n#+date: %<%Y-%m-%d>\n")
-      :unarrowed t)))
-  :bind
-  (("C-c n l" . org-roam-buffer-toggle)
-   ("C-c n f" . org-roam-node-find)
-   ("C-c n g" . org-roam-graph)
-   ("C-c n i" . org-roam-node-insert)
-   ("C-c n c" . org-roam-node-capture)
-   ("C-c n u" . org-roam-ui-mode))
-  :bind-keymap
-  ("C-c n d" . org-roam-dailies-map)
-  :config
-  (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
-  (org-roam-db-autosync-enable))
-#+end_src
-
-**** Templates
-***** ~/org/templtes/zettel.org
-#+begin_src org :tangle ~/org/templates/zettel.org :mkdirp yes
-- tags :: 
-- source ::
-#+end_src
-
-*** Org Roam UI
-#+begin_src emacs-lisp
-(use-package org-roam-ui
-  :ensure t
-  :after (org-roam)
-  :config
-  (setq org-roam-ui-sync-theme t
-        org-roam-ui-follow t
-        org-roam-ui-update-on-save t
-        org-roam-ui-open-on-start t))
-#+end_src
-
-*** Org Journal
-#+begin_src emacs-lisp
-(use-package org-journal
-  :ensure t
-  :defer t
-  :init
-  :config
-  (setq org-journal-dir (file-truename "~/org/journal/")
-        org-journal-file-format "%Y-%m-%d.org"
-        org-journal-date-format "%A, %d %B %Y"
-        org-journal-date-prefix "#+title: "
-        org-journal-time-prefix "* "
-        org-journal-enable-agenda-integration t)
-  (setq org-agenda-file-regexp "\\`\\\([^.].*\\.org\\\|[0-9]\\\{8\\\}\\\(\\.gpg\\\)?\\\)\\'")
-  (add-to-list 'org-agenda-files org-journal-dir)
-  :bind
-  (("C-c n j f" . org-journal-next-entry)
-   ("C-c n j b" . org-journal-previous-entry)
-   ("C-c n j j" . org-journal-new-entry)
-   ("C-c n j s" . org-journal-search)))
-#+end_src
-
-*** Org Ref
-#+begin_src emacs-lisp
-(use-package org-ref
-  :ensure t
-  :init
-  (require 'bibtex)
-  (require 'org-ref-ivy)
-  (require 'org-ref-arxiv)
-  (require 'org-ref-scopus)
-  (require 'org-ref-wos)
-  (setq bibtex-autokey-year-length 4
-	      bibtex-autokey-name-year-separator "-"
-	      bibtex-autokey-year-title-separator "-"
-	      bibtex-autokey-titleword-separator "-"
-	      bibtex-autokey-titlewords 2
-	      bibtex-autokey-titlewords-stretch 1
-	      bibtex-autokey-titleword-length 5
-	      org-ref-insert-link-function 'org-ref-insert-link-hydra/body
-	      org-ref-insert-cite-function 'org-ref-cite-insert-ivy
-	      org-ref-insert-label-function 'org-ref-insert-label-link
-	      org-ref-insert-ref-function 'org-ref-insert-ref-link
-	      org-ref-cite-onclick-function (lambda (_) (org-ref-citation-hydra/body))
-	      org-ref-completion-library 'org-ref-ivy-cite
-	      org-ref-get-pdf-filename-function 'org-ref-get-pdf-filename-helm-bibtex
-	      org-ref-notes-directory "~/org/roam/"
-	      org-ref-notes-function 'orb-edit-notes
-	      org-ref-note-title-format
-	      (concat
-	       "* TODO %y - %t\n"
-	       "  :PROPERTIES:\n"
-	       "  :Custom_ID: %k\n"
-	       "  :NOTER_DOCUMENT: %F\n"
-	       "  :ROAM_KEY: cite:%k\n"
-	       "  :AUTHOR: %9a\n"
-	       "  :JOURNAL: %j\n"
-	       "  :YEAR: %y\n"
-	       "  :VOLUME: %v\n"
-	       "  :PAGES: %p\n"
-	       "  :DOI: %D\n"
-	       "  :URL: %U\n"
-	       "  :END:\n\n"))
-  :bind
-  (:map bibtex-mode-map
-	 ("H-b" . #'org-ref-bibtex-hydra/body)
-	 :map org-mode-map
-	 ("C-c ]" . #'org-ref-insert-link)
-	 ("s-[" . #'org-ref-insert-link-hydra/body)))
-#+end_src
-
-*** Org Roam Bibtex
-#+begin_src emacs-lisp
-(use-package org-roam-bibtex
-  :ensure t
-  :after (org-roam)
-  :hook (org-roam-mode . org-roam-bibtex-mode)
-  :config
-  (setq org-roam-bibtex-preformat-keywords
-	      '("=key=" "title" "file" "author-or-editor" "keywords")
-	      orb-process-file-keyword t
-	      orb-process-file-field t
-	      orb-attached-file-extensions '("pdf")
-	      orb-templates
-	      '(("r" "ref" plain (function org-roam-capture--get-point)
-		 ""
-		 :file-name "${slug}"
-		 :head (concat
-			"#+title: ${=key=}: ${title}\n"
-			"#+roam_key: ${ref}\n"
-			"#+roam_tags:\n\n"
-			"- keywords :: ${keywords}\n\n"
-			"* ${title}\n"
-			"  :PROPERTIES:\n"
-			"  :Custom_ID: ${=key=}\n"
-			"  :URL: ${url}\n"
-			"  :AUTHOR: ${author-or-editor}\n"
-			"  :NOTER_DOCUMENT: ${file}\n"
-			"  :NOTER_PAGE: \n"
-			"  :END:\n\n")
-		 :unnarrowed t))))
-#+end_src
-
-*** Org Noter
-#+begin_src emacs-lisp
-(use-package org-noter
-  :ensure t
-  :after (:any org pdf-view org-roam-bibtex)
-  :config
-  (setq org-noter-notes-window-location 'other-frame
-	      org-noter-always-create-frame nil
-	      org-noter-hide-other nil
-	      org-noter-notes-search-path '("~/org/roam/"))
-  (require 'org-noter-pdftools))
-#+end_src
-
-*** Org Pdftools
-#+begin_src emacs-lisp
-(use-package pdf-tools
-  :mode ("\\.pdf\\'" . pdf-view-mode)
-  :magic ("%PDF" . pdf-view-mode)
-  :config
-  (pdf-tools-install-noverify)
-  :bind
-  (:map pdf-view-mode-map ("q" . #'kill-current-buffer)))
-
-(use-package org-pdftools
-  :ensure t
-  :hook (org-mode . org-pdftools-setup-link))
-
-(use-package org-noter-pdftools
-  :ensure t
-  :after (org-noter)
-  :config
-  (defun org-noter-pdftools-insert-precise-note (&optional toggle-no-questions)
-    (interactive "P")
-    (org-noter--with-valid-session
-     (let ((org-noter-insert-note-no-questions (if toggle-no-questions
-						   (not org-noter-insert-note-no-questions)
-						 org-noter-insert-note-no-questions))
-	   (org-pdftools-use-isearch-link t)
-	   (org-pdftools-use-freepointer-annot t))
-       (org-noter-insert-note (org-noter--get-precise-info)))))
-
-  (defun org-noter-set-start-location (&optional arg)
-    "When opening a session with this document, go to the current location. With a prefix ARG, remove start location."
-    (interactive "P")
-    (org-noter--with-valid-session
-     (let ((inhibit-read-only t)
-	   (ast (org-noter--parse-root))
-	   (location (org-noter--doc-approx-location (when (called-interactively-p 'any) 'interactive))))
-       (with-current-buffer (org-noter--session-notes-buffer session)
-	 (org-with-wide-buffer
-	  (goto-char (org-element-property :begin ast))
-	  (if arg
-	      (org-entry-delete nil org-noter-property-note-location)
-	    (org-entry-put nil org-noter-property-note-location
-			   (org-noter--pretty-print-location location))))))))
-  (with-eval-after-load 'pdf-annot
-    (add-hook 'pdf-annot-activate-handler-functions #'org-noter-pdftools-jump-to-note)))
-#+end_src
-
-*** Org Bullets
-#+begin_src emacs-lisp
-(use-package org-bullets
-  :ensure t
-  :hook (org-mode . org-bullets-mode))
-#+end_src
-
-*** Ox Hugo
-#+begin_src emacs-lisp
-(use-package ox-hugo
-  :ensure t
-  :after (ox)
-  :config
-  (setq org-hugo-base-dir "~/blog/"))
-#+end_src
-
-** Completion
-*** Company
-#+begin_src emacs-lisp
-(use-package company
-  :ensure t
-  :hook (after-init . global-company-mode))
-#+end_src
-
-*** Which-key
+** which-key
 #+begin_src emacs-lisp
 (use-package which-key
   :ensure t
@@ -368,7 +81,14 @@
   (which-key-setup-side-window-bottom))
 #+end_src
 
-*** Vertico
+** company
+#+begin_src emacs-lisp
+(use-package company
+  :ensure t
+  :hook (after-init . global-company-mode))
+#+end_src
+
+** vertico
 #+begin_src emacs-lisp
 (use-package vertico
   :ensure t
@@ -379,15 +99,21 @@
   :bind
   (:map vertico-map
         ("C-j" . vertico-next)
-        ("C-k" . vertico-previous)
-        ("C-f" . vertico-exit)
-        :map minibuffer-local-map
-        ("M-h" . backward-kill-word)))
+	("C-k" . vertico-previous)
+	("C-f" . vertico-exit)
+	:map minibuffer-local-map
+	("M-h" . backward-kill-word)))
+#+end_src
 
+** savehist
+#+begin_src emacs-lisp
 (use-package savehist
   :init
   (savehist-mode))
+#+end_src
 
+** marginalia
+#+begin_src emacs-lisp
 (use-package marginalia
   :ensure t
   :after (vertico)
@@ -398,76 +124,261 @@
    '(marginalia-annotators-heavy marginalia-annotators-light nil)))
 #+end_src
 
-*** Citar
+** embark
+#+begin_src emacs-lisp
+(use-package embark
+  :ensure t
+  :init
+  (setq prefix-help-command #'embark-prefix-help-command)
+  (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
+  :config
+  (add-to-list 'display-buffer-alist
+  	       '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+		 nil
+		 (window-parameters (mode-line-format . none))))
+  :bind
+  (("C-." . embark-act)
+   ("C-;" . embark-dwim)
+   ("C-h B" . embark-bindings)))
+#+end_src
+
+** citar
 #+begin_src emacs-lisp
 (use-package citar
   :ensure t
   :custom
-  (org-cite-global-bibliography global--bibliography-list)
+  (citar-bibliography global/bibliography-list)
+  (citar-notes-paths '("~/org/roam/refs/"))
+  (citar-open-note-function 'orb-citar-edit-note)
+  (citar-at-point-function 'embark-act)
+  ; templates
+  (citar-templates
+   '((main . "${author editor:30%sn}     ${date year issued:4}     ${title:48}")
+     (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords:*}")
+     (preview . "${author editor:%etal} (${year issued date}) ${title}, ${journal journaltitle publisher container-title collection-title}.\n")
+     (note . "Notes on ${author editor:%etal}, ${title}")))
+  ; advices
+  (advice-add 'org-cite-insert :after #'(lambda (args)
+					              (save-excursion (left-char) (citar-org-update-prefix-suffix))))
+  :bind
+  (:map org-mode-map :package org (("C-c b b" . citar-insert-citation)
+				       ("C-c b r" . citar-insert-reference)
+				       ("C-c b o" . citar-open-notes))))
+#+end_src
+
+** citar-embark
+#+begin_src emacs-lisp
+(use-package citar-embark
+  :ensure t
+  :after (citar embark)
+  :config
+  (citar-embark-mode))
+#+end_src
+
+** citeproc
+#+begin_src emacs-lisp
+(use-package citeproc
+  :ensure t)
+#+end_src
+
+** org
+#+begin_src emacs-lisp
+(use-package org
+  :defer t
+  :config
+  (add-to-list 'org-modules 'org-habit)
+  :custom
+  ; org
+  (org-directory (file-truename "~/org/"))
+  (org-todo-keywords '((sequence "TODO(t)" "|" "DONE(d!)" "CANCELED(c@)")))
+  ; indentation
+  (org-startup-truncated nil)
+  (org-startup-indented t)
+  (org-src-preserve-indentation nil)
+  (org-edit-src-content-indentation 0)
+  ; logging
+  (org-log-done 'time)
+  (org-log-into-drawer t)
+  ; templates
+  (org-capture-templates
+   '(("t" "Tasks")
+     ("tt" "Task" entry (file+olp "~/org/tasks.org" "Inbox")
+      "* TODO %?\n%U\n%i"
+      :empty-lines 1)
+
+     ("tl" "Located Task" entry (file+olp "~/org/tasks.org" "Inbox")
+      "* TODO %?\n%U\n%a\n%i"
+      :empty-lines 1)
+
+     ("ts" "Scheduled Task" entry (file+olp "~/org/tasks.org" "Inbox")
+      "* TODO %?\nSCHEDULED: %^t\n%U\n%i"
+      :empty-lines 1)))
+  :bind
+  (("C-c a" . org-agenda)
+   ("C-c l" . org-store-link)
+   ("C-c c" . org-capture)))
+#+end_src
+
+** org-agenda
+#+begin_src emacs-lisp
+(use-package org-agenda
+  :defer t
+  :custom
+  (org-agenda-files '("habits.org" "tasks.org" "study.org"))
+  (org-agenda-start-with-log-mode t))
+#+end_src
+
+** org-babel
+#+begin_src emacs-lisp
+(use-package ob
+  :defer t
+  :custom
+  (org-babel-load-languages '((emacs-lisp . t)))
+  (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages))
+#+end_src
+
+** org-cite
+#+begin_src emacs-lisp
+(use-package oc
+  :defer t
+  :custom
   (org-cite-insert-processor 'citar)
   (org-cite-follow-processor 'citar)
   (org-cite-activate-processor 'citar)
-  (citar-bibliography global--bibliography-list)
-  :bind
-  (:map org-mode-map :package org ("C-c b" . #'org-cite-insert)))
+  (org-cite-global-bibliography global/bibliography-list)
+  (org-cite-export-processors '((latex biblatex)
+				(t csl)))
+  (org-cite-csl-styles-dir "~/org/csl/"))
+
+(use-package oc-biblatex
+  :after oc)
+
+(use-package oc-csl
+  :after oc)
+
+(use-package oc-natbib
+  :after oc)
 #+end_src
 
-*** Ivy Bibtex
+** org-roam
 #+begin_src emacs-lisp
-(use-package ivy-bibtex
+(use-package org-roam
   :ensure t
-  :init
-  (setq bibtex-completion-bibliography global--bibliography-list
-        bibtex-completion-notes-path "~/org/roam/"
-	      bibtex-completion-pdf-field "file"
-	      bibtex-completion-notes-template-multiple-files "* ${author-or-editor}, ${title}, ${journal}, (${year}) :${=type=}: \n\nSee [[cite:&${=key=}]]\n"
-	      bibtex-completion-additional-search-fields '(keywords)
-	      bibtex-completion-display-formats
-	      '((article       . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${journal:40}")
-		(inbook        . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} Chapter ${chapter:32}")
-		(incollection  . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${booktitle:40}")
-		(inproceedings . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${booktitle:40}")
-		(t             . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*}"))))
-#+end_src
-
-** Checking
-*** Flycheck
-#+begin_src emacs-lisp
-(use-package flycheck
-  :ensure t
-  :init
-  (global-flycheck-mode))
-
-(use-package flycheck-popup-tip
-  :ensure t
-  :after (flycheck)
-  :hook (flycheck-mode . flycheck-popup-tip-mode)
   :config
-  (setq flycheck-popup-tip-error-prefix "X "))
+  (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:42}" 'face 'org-tag)))
+  (org-roam-db-autosync-enable)
+  :custom
+  (org-roam-directory (file-truename "~/org/roam/"))
+  (org-roam-complete-everywhere t)
+  ; templates
+  (org-roam-capture-templates
+   '(("d" "default" plain "%?"
+      :if-new (file+head "${slug}.org" "#+title: ${title}\n#+date: %U\n")
+      :unnarrowed t)
 
-(use-package flycheck-posframe
-  :ensure t
-  :after (flycheck)
-  :hook (flycheck-mode . flycheck-posframe-mode))
+     ("z" "zettel" plain (file "~/org/templates/zettel.org")
+      :if-new (file+head "${slug}.org" "#+title: ${title}\n#+date: %U\n")
+      :unarrowed t)
+
+     ("r" "reading notes" plain "%?"
+      :target ("refs/${citar-citekey}.org" "#+title: ${note-title}\n#+created: %U\n")
+      :unarrowed t)))
+  :bind
+  (("C-c n l" . org-roam-buffer-toggle)
+   ("C-c n f" . org-roam-node-find)
+   ("C-c n g" . org-roam-graph)
+   ("C-c n i" . org-roam-node-insert)
+   ("C-c n c" . org-roam-node-capture)
+   ("C-c n u" . org-roam-ui-mode))
+  :bind-keymap
+  ("C-c n d" . org-roam-dailies-map))
 #+end_src
 
-** Project Management
-*** Magit
+*** Templates
+**** ~/org/templates/zettel.org
+#+begin_src org :tangle ~/org/templates/zettel.org :mkdirp yes
+- tags ::
+- source ::
+#+end_src
+
+** org-roam-bibtex
+#+begin_src emacs-lisp
+(use-package org-roam-bibtex
+  :ensure t
+  :after (org-roam)
+  :hook (org-roam-mode . org-roam-bibtex-mode))
+#+end_src
+
+** org-roam-ui
+#+begin_src emacs-lisp
+(use-package org-roam-ui
+  :ensure t
+  :after (org-roam)
+  :custom
+  (org-roam-ui-sync-theme t)
+  (org-roam-ui-follow t)
+  (org-roam-ui-update-on-save t)
+  (org-roam-ui-open-on-start t))
+#+end_src
+
+** citar-org-roam
+#+begin_src emacs-lisp
+(use-package citar-org-roam
+  :ensure t
+  :after (citar org-roam)
+  :config
+  (citar-org-roam-mode)
+  :custom
+  (citar-org-roam-note-title-template "${author} - ${title}")
+  (citar-org-roam-capture-template-key "r"))
+#+end_src
+
+** pdftools
+#+begin_src emacs-lisp
+(use-package pdf-tools
+  :mode ("\\.pdf\\'" . pdf-view-mode)
+  :magic ("%PDF" . pdf-view-mode)
+  :config
+  (pdf-tools-install-noverify)
+  :bind
+  (:map pdf-view-mode-map ("q" . #'kill-current-buffer)))
+#+end_src
+
+** org-pdftools
+#+begin_src emacs-lisp
+(use-package org-pdftools
+  :ensure t
+  :hook (org-mode . org-pdftools-setup-link))
+#+end_src
+
+** org-modern
+#+begin_src emacs-lisp
+(use-package org-modern
+  :ensure t
+  :after (org)
+  :config
+  (global-org-modern-mode))
+#+end_src
+
+** magit
 #+begin_src emacs-lisp
 (use-package magit
   :ensure t
   :custom
   (magit-display-buffer-function 'magit-display-buffer-fullframe-status-topleft-v1)
   (magit-bury-buffer-function 'magit-restore-window-configuration))
-
-(use-package magit-todos
-  :ensure t
-  :config
-  (setq magit-todos-nice nil
-	      magit-todos-scanner 'magit-todos--scan-with-git-grep))
 #+end_src
 
-*** Projectile
+** magit-todos
+#+begin_src emacs-lisp
+(use-package magit-todos
+  :ensure t
+  :custom
+  (magit-todos-nice nil)
+  (magit-todos-scanner 'magit-todos--scan-with-git-grep))
+#+end_src
+
+** projectile
 #+begin_src emacs-lisp
 (use-package projectile
   :ensure t
@@ -475,49 +386,4 @@
   (projectile-mode)
   :bind-keymap
   ("C-c p" . projectile-command-map))
-#+end_src
-
-** Languages
-*** Solidity
-#+begin_src emacs-lisp
-(use-package solidity-mode
-  :ensure t
-  :hook (solidity-mode . eglot-ensure)
-  :config
-  (setq solidity-comment-style 'slash)
-  (add-to-list 'eglot-server-programs '(solidity-mode . ("vscode-solidity-server" "--stdio"))))
-#+end_src
-
-*** Typescript
-#+begin_src emacs-lisp
-(use-package typescript-ts-mode
-  :mode ("\\.ts\\'" . typescript-ts-mode)
-  :hook (typescript-ts-mode . eglot-ensure)
-  :config
-  (add-to-list 'eglot-server-programs '(typescript-ts-mode . ("typescript-language-server" "--stdio"))))
-
-(use-package tsx-ts-mode
-  :mode ("\\.tsx\\'" . tsx-ts-mode)
-  :hook (tsx-ts-mode . eglot-ensure)
-  :config
-  (add-to-list 'eglot-server-programs '(tsx-ts-mode . ("typescript-language-server" "--stdio"))))
-#+end_src
-
-*** Javascript
-#+begin_src emacs-lisp
-(use-package js-ts-mode
-  :mode ("\\.js\\'" . js-ts-mode)
-  :hook (js-ts-mode . eglot-ensure)
-  :hook (javascript-mode . js-ts-mode)
-  :config
-  (add-to-list 'eglot-server-programs '(js-ts-mode . ("typescript-language-server" "--stdio")))
-  (require 'ob-js)
-  (add-to-list 'org-babel-load-languages '(js . t))
-  (add-to-list 'org-babel-tangle-lang-exts '("js" . "js")))
-
-(use-package js-jsx-mode
-  :mode ("\\.jsx\\'" . js-jsx-mode)
-  :hook (js-jsx-mode . eglot-ensure)
-  :config
-  (add-to-list 'eglot-server-programs '(js-jsx-mode . ("typescript-language-server" "--stdio"))))
 #+end_src
