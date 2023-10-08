@@ -418,17 +418,20 @@
 		    '((solidity
 		       (defaultCompiler . "remote")
 		       (compileUsingRemoteVersion . "latest")
-		       (compileUsingLocalVersion . "~/bin/soljson.js")))))
+		       (compileUsingLocalVersion . "~/bin/soljson.js"))))
+  (add-to-list 'eglot-server-programs
+	           '(solidity-mode . ("vscode-solidity-server" "--stdio")))
+  (add-to-list 'eglot-server-programs
+	           '(elixir-mode . ("language_server.bat"))))
 #+end_src
 
 ** solidity-mode
 #+begin_src emacs-lisp
 (use-package solidity-mode
   :ensure t
+  :hook (solidity-mode . eglot-ensure)
   :custom
-  (solidity-comment-style 'slash)
-  (add-to-list 'eglot-server-programs
-	           '(solidity-mode . ("vscode-solidity-server" "--stdio"))))
+  (solidity-comment-style 'slash))
 #+end_src
 
 ** javascript
@@ -486,4 +489,39 @@
   :hook ((typescript-mode . tide-setup)
          (typescript-mode . tide-hl-identifier-mode)
          (before-save . tide-format-before-save)))
+#+end_src
+
+** erlang
+#+begin_src emacs-lisp
+(use-package erlang
+  :ensure t
+  :mode ("\\.erlang\\'" . erlang-mode)
+  :mode ("/rebar\\.config\\(?:\\.script\\)?\\'" . erlang-mode)
+  :mode ("/\\(?:app\\|sys\\)\\.config\\'" . erlang-mode)
+  :hook (erlang-mode . eglot-ensure))
+#+end_src
+
+** elixir
+*** elixir-mode
+#+begin_src emacs-lisp
+(use-package elixir-mode
+  :ensure t
+  :hook (elixir-mode . eglot-ensure))
+#+end_src
+
+*** flycheck-credo
+#+begin_src emacs-lisp
+(use-package flycheck-credo
+  :ensure t
+  :after (elixir-mode)
+  :config
+  (flycheck-credo-setup))
+#+end_src
+
+*** exunit
+#+begin_src emacs-lisp
+(use-package exunit
+  :ensure t
+  :after (elixir-mode)
+  :hook (elixir-mode . exunit-mode))
 #+end_src
