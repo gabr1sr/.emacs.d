@@ -525,3 +525,9 @@
   :after (elixir-mode)
   :hook (elixir-mode . exunit-mode))
 #+end_src
+
+** ssh-agency
+#+begin_src emacs-lisp
+(use-package ssh-agency
+  :ensure t)
+#+end_src
