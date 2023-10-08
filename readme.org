@@ -5,7 +5,8 @@
 
 ** global
 #+begin_src emacs-lisp
-(setq global/bibliography-list '("~/org/biblio/books.bib"))
+(setq global/bibliography-list '("~/org/biblio/books.bib"
+				     "~/org/biblio/blockchain.bib"))
 #+end_src
 
 ** git
@@ -234,6 +235,15 @@
   (org-agenda-start-with-log-mode t))
 #+end_src
 
+** ox-hugo
+#+begin_src emacs-lisp
+(use-package ox-hugo
+  :ensure t
+  :after (ox)
+  :custom
+  (org-hugo-base-dir "~/org/blog/"))
+#+end_src
+
 ** org-babel
 #+begin_src emacs-lisp
 (use-package ob
@@ -287,7 +297,7 @@
       :unarrowed t)
 
      ("r" "reading notes" plain "%?"
-      :target ("refs/${citar-citekey}.org" "#+title: ${note-title}\n#+created: %U\n")
+      :target (file+head "refs/${citar-citekey}.org" "#+title: ${note-title}\n#+created: %U\n")
       :unarrowed t)))
   :bind
   (("C-c n l" . org-roam-buffer-toggle)
@@ -312,7 +322,13 @@
 (use-package org-roam-bibtex
   :ensure t
   :after (org-roam)
-  :hook (org-roam-mode . org-roam-bibtex-mode))
+  :hook (org-roam-mode . org-roam-bibtex-mode)
+  :custom
+  (org-roam-bibtex-preformat-keywords
+   '("=key=" "title" "file" "author" "keywords"))
+  (orb-process-file-keyword t)
+  (orb-process-file-field t)
+  (orb-attached-file-extensions '("pdf")))
 #+end_src
 
 ** org-roam-ui
@@ -391,4 +407,83 @@
   (projectile-mode)
   :bind-keymap
   ("C-c p" . projectile-command-map))
+#+end_src
+
+** eglot
+#+begin_src emacs-lisp
+(use-package eglot
+  :defer t
+  :config
+  (setq-default eglot-workspace-configuration
+		    '((solidity
+		       (defaultCompiler . "remote")
+		       (compileUsingRemoteVersion . "latest")
+		       (compileUsingLocalVersion . "~/bin/soljson.js")))))
+#+end_src
+
+** solidity-mode
+#+begin_src emacs-lisp
+(use-package solidity-mode
+  :ensure t
+  :custom
+  (solidity-comment-style 'slash)
+  (add-to-list 'eglot-server-programs
+	           '(solidity-mode . ("vscode-solidity-server" "--stdio"))))
+#+end_src
+
+** javascript
+*** js2-mode
+#+begin_src emacs-lisp
+(use-package js2-mode
+  :ensure t
+  :config
+  (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+  (add-to-list 'interpreter-mode-alist '("node" . js2-mode)))
+#+end_src
+
+*** js2-refactor
+#+begin_src emacs-lisp
+(use-package js2-refactor
+  :ensure t
+  :config
+  (add-hook 'js2-mode-hook #'js2-refactor-mode))
+#+end_src
+
+*** rjsx-mode
+#+begin_src emacs-lisp
+(use-package rjsx-mode
+  :ensure t
+  :config
+  (add-to-list 'auto-mode-alist '("components\\/.*\\.js\\'" . rjsx-mode)))
+#+end_src
+
+*** xref-js2
+#+begin_src emacs-lisp
+(use-package xref-js2
+  :ensure t
+  :config
+  (define-key js2-mode-map (kbd "M-.") nil)
+  (add-hook 'js2-mode-hook (lambda ()
+			     (add-hook 'xref-backend-functions #'xref-js2-xref-backend nil t)))
+  (setq xref-js2-search-program 'rg))
+#+end_src
+
+** typescript
+*** typescript-mode
+#+begin_src emacs-lisp
+(use-package typescript-mode
+  :ensure t
+  :config
+  (add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-mode))
+  (add-to-list 'auto-mode-alist '("\\.tsx\\'" . typescript-tsx-mode)))
+#+end_src
+
+*** tide
+#+begin_src emacs-lisp
+(use-package tide
+  :ensure t
+  :after (typescript-mode company flycheck)
+  :hook ((typescript-mode . tide-setup)
+         (typescript-mode . tide-hl-identifier-mode)
+         (before-save . tide-format-before-save)))
 #+end_src
