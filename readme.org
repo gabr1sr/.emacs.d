@@ -6,7 +6,8 @@
 ** global
 #+begin_src emacs-lisp
 (setq global/bibliography-list '("~/org/biblio/books.bib"
-				     "~/org/biblio/blockchain.bib"))
+				     "~/org/biblio/blockchain.bib"
+				     "~/org/biblio/whitepapers.bib"))
 #+end_src
 
 ** git
@@ -705,4 +706,24 @@
   :ensure t
   :config
   (editorconfig-mode 1))
+#+end_src
+
+** doom
+*** doom-themes
+#+begin_src emacs-lisp
+(use-package doom-themes
+  :ensure t
+  :config
+  (setq doom-themes-enable-bold t
+	      doom-themes-enable-italic t)
+  (load-theme 'doom-one t)
+  (doom-themes-visual-bell-config)
+  (doom-themes-org-config))
+#+end_src
+
+*** doom-modeline
+#+begin_src emacs-lisp
+(use-package doom-modeline
+  :ensure t
+  :hook (after-init . doom-modeline-mode))
 #+end_src
