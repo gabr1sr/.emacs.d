@@ -1,29 +1,53 @@
-#+title: Emacs Configuration
+#+emacs: Emacs init.el Literate Configuration
 #+property: header-args:emacs-lisp :tangle ~/.emacs.d/init.el
 
-* Configuration
+This is my Emacs Literate Configuration. I'm currently using it in my Windows 11 setup. You can modify and use as you want.
 
-** global
+* Early Init File
+#+begin_src emacs-lisp :tangle ~/.emacs.d/early-init.el
+(setq package-enable-at-startup nil)
+#+end_src
+
+* Optimizations
+Garbage Collector Optimizations.
+
+#+begin_src emacs-lisp
+(setq gc-cons-threshold-original gc-cons-threshold)
+(setq gc-cons-threshold (* 1024 1024 100))
+
+(setq file-name-handler-alist-original file-name-handler-alist)
+(setq file-name-handler-alist nil)
+
+(run-with-idle-timer
+ 5 nil
+ (lambda ()
+   (setq gc-cons-threshold gc-cons-threshold-original)
+   (setq file-name-handler-alist file-name-handler-alist-original)
+   (makunbound 'gc-cons-threshold-original)
+   (makunbound 'file-name-handler-alist-original)
+   (message "gc-cons-threshold and file-name-handler-alist restored")))
+#+end_src
+
+* Global Variables
+Global variables are variables used throughout the configuration.
+
 #+begin_src emacs-lisp
 (setq global/bibliography-list '("~/org/biblio/books.bib"
-				     "~/org/biblio/blockchain.bib"
-				     "~/org/biblio/whitepapers.bib"))
+				 "~/org/biblio/blockchain.bib"
+				 "~/org/biblio/whitepapers.bib"))
 #+end_src
 
-** git
+* Git Variables
+Variables used for Git-related things.
+
 #+begin_src emacs-lisp
 (setq user-full-name "Gabriel Rosa"
-      user-mail-address "gabr1sr@proton.me")
+      user-email-address "gabr1sr@proton.me")
 #+end_src
 
-** MELPA
-#+begin_src emacs-lisp
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
-#+end_src
+* Straight.el Bootstrap
+Bootstrapping straight.el.
 
-** Straight.el
 #+begin_src emacs-lisp
 (defvar bootstrap-version)
 (let ((bootstrap-file
@@ -41,16 +65,19 @@
 (straight-use-package 'use-package)
 #+end_src
 
-** encoding
+* Encoding
+Set editor default encoding.
+
 #+begin_src emacs-lisp
 (prefer-coding-system 'utf-8-unix)
 (set-language-environment "UTF-8")
 #+end_src
 
-** startup
+* Startup
+Things that are loaded when Emacs starts.
+
 #+begin_src emacs-lisp
-(setq ; debug-on-error t
-      load-prefer-newer t
+(setq load-prefer-newer t
       inhibit-startup-message t)
 
 (global-display-line-numbers-mode 1)
@@ -59,12 +86,16 @@
 (tool-bar-mode -1)
 #+end_src
 
-** fonts
+* Fonts
+Editor fonts.
+
 #+begin_src emacs-lisp
 (set-face-attribute 'default nil :font "JetBrains Mono" :height 100 :weight 'regular)
 #+end_src
 
-** custom
+* Custom
+Load custom file and set cache, backup and autosave directories.
+
 #+begin_src emacs-lisp
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (ignore-errors (load custom-file))
@@ -84,32 +115,40 @@
       tramp-auto-save-directory user-autosave-directory)
 #+end_src
 
-** electric
+* Electric Pairs
+Use the built-in autopairs mode.
+
 #+begin_src emacs-lisp
 (when (fboundp 'electric-pair-mode)
   (electric-pair-mode t))
 #+end_src
 
-** compatibility
+* Compatibility
+Minimal adjustments to solve compatibility issues.
+
+** pdf-view
 #+begin_src emacs-lisp
 (dolist (mode '(pdf-view-mode-hook))
   (add-hook mode (lambda () (display-line-numbers-mode 0))))
 #+end_src
 
-** tree-sitter
+* Tree Sitter
+Tree Sitter languages support.
+
 #+begin_src emacs-lisp
 (setq treesit-language-source-alist
-      '((elixir "https://github.com/elixir-lang/tree-sitter-elixir")
+      '((rust "https://github.com/tree-sitter/tree-sitter-rust")
 	(heex "https://github.com/phoenixframework/tree-sitter-heex")
-        (rust "https://github.com/tree-sitter/tree-sitter-rust")))
+	(elixir "https://github.com/elixir-lang/tree-sitter-elixir")))
 #+end_src
 
 * Packages
+Package-specific configurations.
 
 ** which-key
 #+begin_src emacs-lisp
 (use-package which-key
-  :ensure t
+  :straight (which-key :type git :host github :repo "justbur/emacs-which-key")
   :hook (after-init . which-key-mode)
   :config
   (which-key-setup-side-window-bottom))
@@ -118,21 +157,21 @@
 ** company
 #+begin_src emacs-lisp
 (use-package company
-  :ensure t
+  :straight (company :type git :host github :repo "company-mode/company-mode")
   :hook (after-init . global-company-mode))
 #+end_src
 
 ** vertico
 #+begin_src emacs-lisp
 (use-package vertico
-  :ensure t
+  :straight (vertico :type git :host github :repo "minad/vertico")
   :init
   (vertico-mode)
   :custom
   (vertico-cycle t)
   :bind
   (:map vertico-map
-        ("C-j" . vertico-next)
+	("C-j" . vertico-next)
 	("C-k" . vertico-previous)
 	("C-f" . vertico-exit)
 	:map minibuffer-local-map
@@ -142,6 +181,7 @@
 ** savehist
 #+begin_src emacs-lisp
 (use-package savehist
+  :straight (savehist :type built-in)
   :init
   (savehist-mode))
 #+end_src
@@ -149,46 +189,35 @@
 ** marginalia
 #+begin_src emacs-lisp
 (use-package marginalia
-  :ensure t
+  :straight (marginalia :type git :host github :repo "minad/marginalia")
   :after (vertico)
   :init
   (marginalia-mode)
   :custom
-  (marginalia-annotators
-   '(marginalia-annotators-heavy marginalia-annotators-light nil)))
+  (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil)))
 #+end_src
 
 ** embark
-*** embark
 #+begin_src emacs-lisp
 (use-package embark
-  :ensure t
-  :init
-  (setq prefix-help-command #'embark-prefix-help-command)
-  (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
-  :config
+  :straight (embark :type git :host github :repo "oantolin/embark")
+  :hook (eldoc-documentation-functions . embark-eldoc-first-target)
+  :custom
+  (prefix-help-command #'embark-prefix-help-command)
   (add-to-list 'display-buffer-alist
-  	       '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+	       '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
 		 nil
 		 (window-parameters (mode-line-format . none))))
   :bind
-  (("C-." . embark-act)
-   ("C-;" . embark-dwim)
-   ("C-h B" . embark-bindings)))
-#+end_src
-
-*** embark-consult
-#+begin_src emacs-lisp
-(use-package embark-consult
-  :ensure t
-  :hook
-  (embark-collect-mode . consult-preview-at-point-mode))
+  ("C-." . embark-act)
+  ("C-;" . embark-dwim)
+  ("C-h B" . embark-bindings))
 #+end_src
 
 ** citar
 #+begin_src emacs-lisp
 (use-package citar
-  :ensure t
+  :straight (citar :type git :host github :repo "emacs-citar/citar")
   :custom
   (citar-bibliography global/bibliography-list)
   (citar-notes-paths '("~/org/roam/refs/"))
@@ -205,14 +234,13 @@
 					              (save-excursion (left-char) (citar-org-update-prefix-suffix))))
   :bind
   (:map org-mode-map :package org (("C-c b b" . citar-insert-citation)
-				       ("C-c b r" . citar-insert-reference)
-				       ("C-c b o" . citar-open-notes))))
+				   ("C-c b r" . citar-insert-reference)
+				   ("C-c b o" . citar-open-notes))))
 #+end_src
 
 ** citar-embark
 #+begin_src emacs-lisp
 (use-package citar-embark
-  :ensure t
   :after (citar embark)
   :config
   (citar-embark-mode))
@@ -221,78 +249,78 @@
 ** citeproc
 #+begin_src emacs-lisp
 (use-package citeproc
-  :ensure t)
+  :straight (citeproc :type git :host github :repo "andras-simonyi/citeproc-el"))
 #+end_src
 
 ** org
 #+begin_src emacs-lisp
 (use-package org
-  :defer t
-  :config
-  (add-to-list 'org-modules 'org-habit)
+  :straight (org :type built-in)
   :custom
   ; org
   (org-directory (file-truename "~/org/"))
   (org-todo-keywords '((sequence "TODO(t)" "|" "DONE(d!)" "CANCELED(c@)")))
+
   ; indentation
-  (org-startup-truncated nil)
+  (org-startup-truncated t)
   (org-startup-indented t)
-  (org-src-preserve-indentation nil)
+
+  ; src block indentation
+  (org-src-preserve-indentation t)
+  (org-src-tab-acts-natively t)
   (org-edit-src-content-indentation 0)
+
   ; logging
   (org-log-done 'time)
   (org-log-into-drawer t)
+
   ; templates
   (org-capture-templates
    '(("t" "Tasks")
-     ("tt" "Task" entry (file+olp "~/org/tasks.org" "Inbox")
-      "* TODO %?\n%U\n%i"
-      :empty-lines 1)
+      ("tt" "Task" entry (file+olp "~/org/tasks.org" "Inbox")
+       "* TODO %?\n%U\n%i"
+       :empty-lines 1)
 
-     ("tl" "Located Task" entry (file+olp "~/org/tasks.org" "Inbox")
-      "* TODO %?\n%U\n%a\n%i"
-      :empty-lines 1)
+      ("tl" "Located Task" entry (file+olp "~/org/tasks.org" "Inbox")
+       "* TODO %?\n%U\n%a\n%i"
+       :empty-lines 1)
 
-     ("ts" "Scheduled Task" entry (file+olp "~/org/tasks.org" "Inbox")
-      "* TODO %?\nSCHEDULED: %^t\n%U\n%i"
-      :empty-lines 1)))
+      ("ts" "Scheduled Task" entry (file+olp "~/org/tasks.org" "Inbox")
+       "* TODO %?\nSCHEDULED: %^t\n%U\n%i"
+       :empty-lines 1)))
   :bind
-  (("C-c a" . org-agenda)
-   ("C-c l" . org-store-link)
-   ("C-c c" . org-capture)))
+  ("C-c a" . org-agenda)
+  ("C-c l" . org-store-link)
+  ("C-c c" . org-capture))
 #+end_src
 
 ** org-agenda
 #+begin_src emacs-lisp
 (use-package org-agenda
-  :defer t
+  :straight (org-agenda :type built-in)
   :custom
   (org-agenda-files '("habits.org" "tasks.org" "study.org"))
   (org-agenda-start-with-log-mode t))
 #+end_src
 
-** ox-hugo
-#+begin_src emacs-lisp
-(use-package ox-hugo
-  :ensure t
-  :after (ox)
-  :custom
-  (org-hugo-base-dir "~/org/blog/"))
-#+end_src
-
 ** org-babel
 #+begin_src emacs-lisp
 (use-package ob
-  :defer t
+  :straight (ob :type built-in)
   :custom
-  (org-babel-load-languages '((emacs-lisp . t)))
-  (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages))
+  (org-babel-do-load-languages 'org-babel-load-languages '((emacs-lisp . t))))
+#+end_src
+
+** ob-async
+#+begin_src emacs-lisp
+(use-package ob-async
+  :straight (ob-async :type git :host github :repo "astahlman/ob-async"))
 #+end_src
 
 ** org-cite
 #+begin_src emacs-lisp
 (use-package oc
-  :defer t
+  :straight (oc :type built-in)
   :custom
   (org-cite-insert-processor 'citar)
   (org-cite-follow-processor 'citar)
@@ -303,19 +331,31 @@
   (org-cite-csl-styles-dir "~/org/csl/"))
 
 (use-package oc-biblatex
+  :straight (oc-biblatex :type built-in)
   :after oc)
 
 (use-package oc-csl
+  :straight (oc-csl :type built-in)
   :after oc)
 
 (use-package oc-natbib
+  :straight (oc-natbib :type built-in)
   :after oc)
+#+end_src
+
+** ox-hugo
+#+begin_src emacs-lisp
+(use-package ox-hugo
+  :straight (ox-hugo :type git :host github :repo "kaushalmodi/ox-hugo")
+  :after ox
+  :custom
+  (org-hugo-base-dir "~/org/blog/"))
 #+end_src
 
 ** org-roam
 #+begin_src emacs-lisp
 (use-package org-roam
-  :ensure t
+  :straight (org-roam :type git :host github :repo "org-roam/org-roam")
   :config
   (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:42}" 'face 'org-tag)))
   (org-roam-db-autosync-enable)
@@ -356,7 +396,7 @@
 ** org-roam-bibtex
 #+begin_src emacs-lisp
 (use-package org-roam-bibtex
-  :ensure t
+  :straight (org-roam-bibtex :type git :host github :repo "org-roam/org-roam-bibtex")
   :after (org-roam)
   :hook (org-roam-mode . org-roam-bibtex-mode)
   :custom
@@ -370,7 +410,7 @@
 ** org-roam-ui
 #+begin_src emacs-lisp
 (use-package org-roam-ui
-  :ensure t
+  :straight (org-roam-ui :type git :host github :repo "org-roam/org-roam-ui")
   :after (org-roam)
   :custom
   (org-roam-ui-sync-theme t)
@@ -382,7 +422,7 @@
 ** citar-org-roam
 #+begin_src emacs-lisp
 (use-package citar-org-roam
-  :ensure t
+  :straight (citar-org-roam :type git :host github :repo "emacs-citar/citar-org-roam")
   :after (citar org-roam)
   :config
   (citar-org-roam-mode)
@@ -404,14 +444,14 @@
 ** org-pdftools
 #+begin_src emacs-lisp
 (use-package org-pdftools
-  :ensure t
+  :straight (org-pdftools :type git :host github :repo "fuxialexander/org-pdftools")
   :hook (org-mode . org-pdftools-setup-link))
 #+end_src
 
 ** org-modern
 #+begin_src emacs-lisp
 (use-package org-modern
-  :ensure t
+  :straight (org-modern :type git :host github :repo "minad/org-modern")
   :after (org)
   :config
   (global-org-modern-mode))
@@ -420,7 +460,7 @@
 ** magit
 #+begin_src emacs-lisp
 (use-package magit
-  :ensure t
+  :straight (magit :type git :host github :repo "magit/magit")
   :custom
   (magit-display-buffer-function 'magit-display-buffer-fullframe-status-topleft-v1)
   (magit-bury-buffer-function 'magit-restore-window-configuration))
@@ -429,17 +469,51 @@
 ** magit-todos
 #+begin_src emacs-lisp
 (use-package magit-todos
-  :ensure t
+  :straight (magit-todos :type git :host github :repo "alphapapa/magit-todos")
   :custom
   (magit-todos-nice nil)
   (magit-todos-scanner 'magit-todos--scan-with-git-grep)
   (add-to-list 'hl-todo-keyword-faces '("@audit" "#D2691F")))
 #+end_src
 
+** ssh-agency
+#+begin_src emacs-lisp
+(use-package ssh-agency
+  :straight (ssh-agency :type git :host github :repo "magit/ssh-agency"))
+#+end_src
+
+** editorconfig
+#+begin_src emacs-lisp
+(use-package editorconfig
+  :straight (editorconfig :type git :host github :repo "editorconfig/editorconfig-emacs")
+  :config
+  (editorconfig-mode 1))
+#+end_src
+
+** doom
+*** doom-themes
+#+begin_src emacs-lisp
+(use-package doom-themes
+  :straight (doom-themes :type git :host github :repo "doomemacs/themes")
+  :config
+  (setq doom-themes-enable-bold t
+	      doom-themes-enable-italic t)
+  (load-theme 'doom-one t)
+  (doom-themes-visual-bell-config)
+  (doom-themes-org-config))
+#+end_src
+
+*** doom-modeline
+#+begin_src emacs-lisp
+(use-package doom-modeline
+  :straight (doom-modeline :type git :host github :repo "seagle0128/doom-modeline")
+  :hook (after-init . doom-modeline-mode))
+#+end_src
+
 ** projectile
 #+begin_src emacs-lisp
 (use-package projectile
-  :ensure t
+  :straight (projectile type: git :host github :repo "bbatsov/projectile")
   :init
   (projectile-mode)
   :bind-keymap
@@ -449,7 +523,7 @@
 ** eglot
 #+begin_src emacs-lisp
 (use-package eglot
-  :defer t
+  :straight (eglot :type built-in)
   :config
   (setq-default eglot-workspace-configuration
 		    '((solidity
@@ -465,275 +539,47 @@
 ** solidity-mode
 #+begin_src emacs-lisp
 (use-package solidity-mode
-  :ensure t
+  :straight (solidity-mode :type git :host github :repo "ethereum/emacs-solidity")
   :hook (solidity-mode . eglot-ensure)
   :custom
   (solidity-comment-style 'slash))
 #+end_src
 
-** javascript
-*** js2-mode
-#+begin_src emacs-lisp
-(use-package js2-mode
-  :ensure t
-  :config
-  (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
-  (add-to-list 'interpreter-mode-alist '("node" . js2-mode))
-  (setq js2-mode-hook
-  '(lambda () (progn
-    (set-variable 'indent-tabs-mode nil)))))
-#+end_src
-
-*** js2-refactor
-#+begin_src emacs-lisp
-(use-package js2-refactor
-  :ensure t
-  :config
-  (add-hook 'js2-mode-hook #'js2-refactor-mode))
-#+end_src
-
-*** rjsx-mode
-#+begin_src emacs-lisp
-(use-package rjsx-mode
-  :ensure t
-  :hook (rjsx-mode . eglot-ensure)
-  :config
-  (add-to-list 'auto-mode-alist '("components\\/.*\\.js\\'" . rjsx-mode)))
-#+end_src
-
-*** xref-js2
-#+begin_src emacs-lisp
-(use-package xref-js2
-  :ensure t
-  :hook (js2-mode . eglot-ensure)
-  :config
-  (define-key js2-mode-map (kbd "M-.") nil)
-  (add-hook 'js2-mode-hook (lambda ()
-			     (add-hook 'xref-backend-functions #'xref-js2-xref-backend nil t)))
-  (setq xref-js2-search-program 'rg))
-#+end_src
-
-** typescript
-*** typescript-mode
-#+begin_src emacs-lisp
-(use-package typescript-mode
-  :ensure t
-  :hook (typescript-mode . eglot-ensure)
-  :config
-  (add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-mode))
-  (add-to-list 'auto-mode-alist '("\\.tsx\\'" . typescript-tsx-mode)))
-#+end_src
-
-*** tide
-#+begin_src emacs-lisp
-(use-package tide
-  :ensure t
-  :after (typescript-mode company flycheck)
-  :hook ((typescript-mode . tide-setup)
-         (typescript-mode . tide-hl-identifier-mode)
-         (before-save . tide-format-before-save)))
-#+end_src
-
 ** erlang
 #+begin_src emacs-lisp
 (use-package erlang
-  :ensure t
+  :straight (erlang :source melpa)
   :mode ("\\.erlang\\'" . erlang-mode)
   :mode ("/rebar\\.config\\(?:\\.script\\)?\\'" . erlang-mode)
   :mode ("/\\(?:app\\|sys\\)\\.config\\'" . erlang-mode)
   :hook (erlang-mode . eglot-ensure))
 #+end_src
 
-** elixir
+** tree-sitter langs
 *** elixir-ts-mode
 #+begin_src emacs-lisp
 (use-package elixir-ts-mode
-  :ensure t
-  :hook (elixir-ts-mode . eglot-ensure))
+  :straight (elixir-ts-mode :type git :host github :repo "wkirschbaum/elixir-ts-mode")
+  :hook (elixir-ts-mode . eglot-ensure)
+  :init
+  (add-to-list 'org-src-lang-modes '("elixir" . elixir-ts)))
 #+end_src
 
 *** heex-ts-mode
 #+begin_src emacs-lisp
 (use-package heex-ts-mode
-  :ensure t
-  :hook (heex-ts-mode . eglot-ensure))
-#+end_src
-
-** ssh-agency
-#+begin_src emacs-lisp
-(use-package ssh-agency
-  :ensure t)
-#+end_src
-
-** consult
-*** consult
-#+begin_src emacs-lisp
-;; Example configuration for Consult
-(use-package consult
-  ;; Replace bindings. Lazily loaded due by `use-package'.
-  :bind (;; C-c bindings in `mode-specific-map'
-         ("C-c M-x" . consult-mode-command)
-         ("C-c h" . consult-history)
-         ("C-c k" . consult-kmacro)
-         ("C-c m" . consult-man)
-         ("C-c i" . consult-info)
-         ([remap Info-search] . consult-info)
-         ;; C-x bindings in `ctl-x-map'
-         ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
-         ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
-         ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
-         ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
-         ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
-         ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
-         ;; Custom M-# bindings for fast register access
-         ("M-#" . consult-register-load)
-         ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
-         ("C-M-#" . consult-register)
-         ;; Other custom bindings
-         ("M-y" . consult-yank-pop)                ;; orig. yank-pop
-         ;; M-g bindings in `goto-map'
-         ("M-g e" . consult-compile-error)
-         ("M-g f" . consult-flymake)               ;; Alternative: consult-flycheck
-         ("M-g g" . consult-goto-line)             ;; orig. goto-line
-         ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
-         ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
-         ("M-g m" . consult-mark)
-         ("M-g k" . consult-global-mark)
-         ("M-g i" . consult-imenu)
-         ("M-g I" . consult-imenu-multi)
-         ;; M-s bindings in `search-map'
-         ("M-s d" . consult-find)                  ;; Alternative: consult-fd
-         ("M-s D" . consult-locate)
-         ("M-s g" . consult-grep)
-         ("M-s G" . consult-git-grep)
-         ("M-s r" . consult-ripgrep)
-         ("M-s l" . consult-line)
-         ("M-s L" . consult-line-multi)
-         ("M-s k" . consult-keep-lines)
-         ("M-s u" . consult-focus-lines)
-         ;; Isearch integration
-         ("M-s e" . consult-isearch-history)
-         :map isearch-mode-map
-         ("M-e" . consult-isearch-history)         ;; orig. isearch-edit-string
-         ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
-         ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
-         ("M-s L" . consult-line-multi)            ;; needed by consult-line to detect isearch
-         ;; Minibuffer history
-         :map minibuffer-local-map
-         ("M-s" . consult-history)                 ;; orig. next-matching-history-element
-         ("M-r" . consult-history))                ;; orig. previous-matching-history-element
-
-  ;; Enable automatic preview at point in the *Completions* buffer. This is
-  ;; relevant when you use the default completion UI.
-  :hook (completion-list-mode . consult-preview-at-point-mode)
-
-  ;; The :init configuration is always executed (Not lazy)
+  :straight (heex-ts-mode :type git :host github :repo "wkirschbaum/heex-ts-mode")
+  :hook (heex-ts-mode . eglot-ensure)
   :init
-
-  ;; Optionally configure the register formatting. This improves the register
-  ;; preview for `consult-register', `consult-register-load',
-  ;; `consult-register-store' and the Emacs built-ins.
-  (setq register-preview-delay 0.5
-        register-preview-function #'consult-register-format)
-
-  ;; Optionally tweak the register preview window.
-  ;; This adds thin lines, sorting and hides the mode line of the window.
-  (advice-add #'register-preview :override #'consult-register-window)
-
-  ;; Use Consult to select xref locations with preview
-  (setq xref-show-xrefs-function #'consult-xref
-        xref-show-definitions-function #'consult-xref)
-
-  ;; Configure other variables and modes in the :config section,
-  ;; after lazily loading the package.
-  :config
-
-  ;; Optionally configure preview. The default value
-  ;; is 'any, such that any key triggers the preview.
-  ;; (setq consult-preview-key 'any)
-  ;; (setq consult-preview-key "M-.")
-  ;; (setq consult-preview-key '("S-<down>" "S-<up>"))
-  ;; For some commands and buffer sources it is useful to configure the
-  ;; :preview-key on a per-command basis using the `consult-customize' macro.
-  (consult-customize
-   consult-theme :preview-key '(:debounce 0.2 any)
-   consult-ripgrep consult-git-grep consult-grep
-   consult-bookmark consult-recent-file consult-xref
-   consult--source-bookmark consult--source-file-register
-   consult--source-recent-file consult--source-project-recent-file
-   ;; :preview-key "M-."
-   :preview-key '(:debounce 0.4 any))
-
-  ;; Optionally configure the narrowing key.
-  ;; Both < and C-+ work reasonably well.
-  (setq consult-narrow-key "<") ;; "C-+"
-
-  ;; Optionally make narrowing help available in the minibuffer.
-  ;; You may want to use `embark-prefix-help-command' or which-key instead.
-  ;; (define-key consult-narrow-map (vconcat consult-narrow-key "?") #'consult-narrow-help)
-
-  ;; By default `consult-project-function' uses `project-root' from project.el.
-  ;; Optionally configure a different project root function.
-  ;;;; 1. project.el (the default)
-  ;; (setq consult-project-function #'consult--default-project--function)
-  ;;;; 2. vc.el (vc-root-dir)
-  ;; (setq consult-project-function (lambda (_) (vc-root-dir)))
-  ;;;; 3. locate-dominating-file
-  ;; (setq consult-project-function (lambda (_) (locate-dominating-file "." ".git")))
-  ;;;; 4. projectile.el (projectile-project-root)
-  ;; (autoload 'projectile-project-root "projectile")
-  ;; (setq consult-project-function (lambda (_) (projectile-project-root)))
-  ;;;; 5. No project support
-  ;; (setq consult-project-function nil)
-)
+  (add-to-list 'org-src-lang-modes '("heex" . heex-ts)))
 #+end_src
 
-*** consult-todo
-#+begin_src emacs-lisp
-(use-package consult-todo
-  :straight (consult-todo :type git :host github :repo "liuyinz/consult-todo")
-  :config
-  (setq consult-todo-narrow
-    '((?t . "TODO")
-      (?f . "FIXME")
-      (?b . "BUG")
-      (?h . "HACK")
-      (?a . "@audit"))))
-#+end_src
-
-** editorconfig
-#+begin_src emacs-lisp
-(use-package editorconfig
-  :ensure t
-  :config
-  (editorconfig-mode 1))
-#+end_src
-
-** doom
-*** doom-themes
-#+begin_src emacs-lisp
-(use-package doom-themes
-  :ensure t
-  :config
-  (setq doom-themes-enable-bold t
-	      doom-themes-enable-italic t)
-  (load-theme 'doom-one t)
-  (doom-themes-visual-bell-config)
-  (doom-themes-org-config))
-#+end_src
-
-*** doom-modeline
-#+begin_src emacs-lisp
-(use-package doom-modeline
-  :ensure t
-  :hook (after-init . doom-modeline-mode))
-#+end_src
-
-** rust-ts-mode
+*** rust-ts-mode
 #+begin_src emacs-lisp
 (use-package rust-ts-mode
+  :straight (rust-ts-mode :type built-in)
   :mode "\\.rs\\'"
   :hook (rust-ts-mode . eglot-ensure)
   :init
-  (add-to-list 'auto-mode-alist '("\\.rs\\'" . rust-ts-mode)))
+  (add-to-list 'org-src-lang-modes '("rust" . rust-ts)))
 #+end_src
