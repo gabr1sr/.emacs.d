@@ -1,4 +1,4 @@
-title: Emacs init.el Literate Configuration
+#+title: Emacs init.el Literate Configuration
 #+property: header-args:emacs-lisp :tangle ~/.emacs.d/init.el
 
 This is my Emacs Literate Configuration. I'm currently using it in my Windows 11 setup. You can modify and use as you want.
