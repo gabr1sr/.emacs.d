@@ -308,7 +308,15 @@ Package-specific configurations.
 (use-package ob
   :straight (ob :type built-in)
   :custom
-  (org-babel-do-load-languages 'org-babel-load-languages '((emacs-lisp . t))))
+  (org-confirm-babel-evaluate nil)
+  (org-babel-do-load-languages 'org-babel-load-languages '((emacs-lisp . t)
+							   (rust . t))))
+#+end_src
+
+** ob-rust
+#+begin_src emacs-lisp
+(use-package ob-rust
+  :straight (ob-rust :type git :host github :repo "micanzhang/ob-rust"))
 #+end_src
 
 ** ob-async
