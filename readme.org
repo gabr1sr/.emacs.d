@@ -91,6 +91,7 @@ Editor fonts.
 
 #+begin_src emacs-lisp
 (set-face-attribute 'default nil :font "JetBrains Mono" :height 100 :weight 'regular)
+(set-fontset-font t 'emoji "Segoe UI Emoji")
 #+end_src
 
 * Custom
@@ -277,6 +278,9 @@ Package-specific configurations.
   (org-log-done 'time)
   (org-log-into-drawer t)
 
+  ; latex preview
+  (org-format-latex-options (plist-put org-format-latex-options :scale 2.0))
+  
   ; templates
   (org-capture-templates
    '(("t" "Tasks")
@@ -636,4 +640,19 @@ Package-specific configurations.
   :init
   (add-to-list 'major-mode-remap-alist '(json-mode . json-ts-mode))
   (add-to-list 'org-src-lang-modes '("json" . json-ts)))
+#+end_src
+
+** emojify
+#+begin_src emacs-lisp
+(use-package emojify
+  :straight (emojify :type git :host github :repo "iqbalansari/emacs-emojify")
+  :hook (after-init . global-emojify-mode)
+  :custom
+  (when (member "Segoe UI Emoji" (font-family-list))
+    (set-fontset-font
+     t 'symbol (font-spec :family "Segoe UI Emoji") nil 'prepend))
+  (emojify-display-style 'unicode)
+  (emojify-emoji-styles '(unicode))
+  :bind
+  ("C-c ." . emojify-insert-emoji))
 #+end_src
