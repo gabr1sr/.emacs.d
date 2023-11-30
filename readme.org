@@ -294,7 +294,11 @@ Package-specific configurations.
 
       ("ts" "Scheduled Task" entry (file+olp "~/org/tasks.org" "Inbox")
        "* TODO %?\nSCHEDULED: %^t\n%U\n%i"
-       :empty-lines 1)))
+       :empty-lines 1)
+
+     ("a" "Auditing")
+      ("af" "Audit Finding" entry (file (lambda () (concat projectile-project-root "findings.org")))
+       (file "~/org/templates/audit_finding.org"))))
   :bind
   ("C-c a" . org-agenda)
   ("C-c l" . org-store-link)
@@ -402,15 +406,19 @@ Package-specific configurations.
       :target (file+head "%<%Y-%m-%d>.org" "#+title: %<%Y-%m-%d>\n"))))
   
   :bind
+  ; org-roam bind
   (("C-c n l" . org-roam-buffer-toggle)
    ("C-c n f" . org-roam-node-find)
    ("C-c n g" . org-roam-graph)
    ("C-c n i" . org-roam-node-insert)
    ("C-c n c" . org-roam-node-capture)
    ("C-c n u" . org-roam-ui-mode)
+   
+   ; org-roam-dailies bind
    :map org-roam-dailies-map
    ("Y" . org-roam-dailies-capture-yesterday)
    ("T" . org-roam-dailies-capture-tomorrow))
+  
   :bind-keymap
   ("C-c n d" . org-roam-dailies-map))
 #+end_src
@@ -670,4 +678,10 @@ Package-specific configurations.
   (emojify-emoji-styles '(unicode))
   :bind
   ("C-c ." . emojify-insert-emoji))
+#+end_src
+
+** elcord
+#+begin_src emacs-lisp
+(use-package elcord
+  :straight (elcord :type git :host github :repo "Mstrodl/elcord"))
 #+end_src
