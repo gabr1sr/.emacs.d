@@ -245,6 +245,7 @@ Package-specific configurations.
 ** citar-embark
 #+begin_src emacs-lisp
 (use-package citar-embark
+  :straight (citar-embark :type git :host github :repo "emacs-citar/citar")
   :after (citar embark)
   :config
   (citar-embark-mode))
@@ -264,7 +265,7 @@ Package-specific configurations.
   ; org
   (org-directory (file-truename "~/org/"))
   (org-todo-keywords '((sequence "TODO(t)" "|" "DONE(d!)" "CANCELED(c@)")))
-
+  
   ; indentation
   (org-startup-truncated t)
   (org-startup-indented t)
@@ -375,6 +376,8 @@ Package-specific configurations.
 #+begin_src emacs-lisp
 (use-package org-roam
   :straight (org-roam :type git :host github :repo "org-roam/org-roam")
+  :init
+  (require 'org-roam-dailies)
   :config
   (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:42}" 'face 'org-tag)))
   (org-roam-db-autosync-enable)
@@ -566,7 +569,7 @@ Package-specific configurations.
 		    '((solidity
 		       (defaultCompiler . "remote")
 		       (compileUsingRemoteVersion . "latest")
-		       (compileUsingLocalVersion . "~/bin/soljson.js"))))
+		       (compileUsingLocalVersion . "solc"))))
   (add-to-list 'eglot-server-programs
 	           '(solidity-mode . ("vscode-solidity-server" "--stdio")))
   (add-to-list 'eglot-server-programs
@@ -580,7 +583,7 @@ Package-specific configurations.
   :hook (solidity-mode . eglot-ensure)
   :custom
   (solidity-comment-style 'slash)
-  (solidity-solc-path "~/bin/solc.exe"))
+  (solidity-solc-path "solc"))
 #+end_src
 
 ** erlang
@@ -684,4 +687,43 @@ Package-specific configurations.
 #+begin_src emacs-lisp
 (use-package elcord
   :straight (elcord :type git :host github :repo "Mstrodl/elcord"))
+#+end_src
+
+** lean4-mode
+#+begin_src emacs-lisp
+(use-package lean4-mode
+  :straight (lean4-mode :type git :host github :repo "leanprover/lean4-mode" :files ("*.el" "data"))
+  :commands (lean4-mode))
+#+end_src
+
+** nix-mode
+#+begin_src emacs-lisp
+(use-package nix-mode
+  :straight (nix-mode :type git :host github :repo "NixOS/nix-mode")
+  :mode "\\.nix\\'")
+#+end_src
+
+** direnv
+#+begin_src emacs-lisp
+(use-package direnv
+  :straight (direnv :type git :host github :repo "wbolster/emacs-direnv")
+  :config
+  (direnv-mode))
+#+end_src
+
+** org-drill
+#+begin_src emacs-lisp
+(use-package org-drill
+  :straight (org-drill :type git :host gitlab :repo "phillord/org-drill"))
+#+end_src
+
+** plantuml-mode
+#+begin_src emacs-lisp
+(use-package plantuml-mode
+  :straight (plantuml-mode :type git :host github :repo "gabr1sr/plantuml-mode")
+  :mode "\\.plantuml\\'"
+  :init
+  (add-to-list 'org-src-lang-modes '("plantuml" . plantuml))
+  (setq plantuml-executable-path "/nix/store/xa0q4xl09cjgn4yna2z46vra8a1z0wps-user-environment/bin/plantuml"
+	plantuml-default-exec-mode 'executable))
 #+end_src
