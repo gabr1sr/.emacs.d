@@ -1,7 +1,7 @@
 #+title: Emacs init.el Literate Configuration
 #+property: header-args:emacs-lisp :tangle ~/.emacs.d/init.el
 
-This is my Emacs Literate Configuration. I'm currently using it in my Windows 11 setup. You can modify and use as you want.
+This is my Emacs Literate Configuration. I'm currently using it in my [[https://github.com/gabr1sr/nixos][NixOS setup]]. You can modify and use as you want.
 
 * Early Init File
 #+begin_src emacs-lisp :tangle ~/.emacs.d/early-init.el
@@ -43,6 +43,20 @@ Variables used for Git-related things.
 #+begin_src emacs-lisp
 (setq user-full-name "Gabriel Rosa"
       user-email-address "gabr1sr@proton.me")
+#+end_src
+
+* Custom Functions
+#+begin_src emacs-lisp
+(defun publish-dir-org ()
+  "Publish all org files in a directory"
+  (interactive)
+  (save-excursion
+    (mapc
+     (lambda (file)
+       (with-current-buffer
+       (find-file-noselect file)
+     (org-md-export-to-markdown)))
+       (file-expand-wildcards  "*.org"))))
 #+end_src
 
 * Straight.el Bootstrap
@@ -142,7 +156,6 @@ Tree Sitter languages support.
 	(heex "https://github.com/phoenixframework/tree-sitter-heex")
 	(elixir "https://github.com/elixir-lang/tree-sitter-elixir")
 	(javascript "https://github.com/tree-sitter/tree-sitter-javascript")
-	(typescript "https://github.com/tree-sitter/tree-sitter-typescript")
 	(json "https://github.com/tree-sitter/tree-sitter-json")))
 #+end_src
 
