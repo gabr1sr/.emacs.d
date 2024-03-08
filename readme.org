@@ -237,7 +237,7 @@ Package-specific configurations.
   :straight (citar :type git :host github :repo "emacs-citar/citar")
   :custom
   (citar-bibliography global/bibliography-list)
-  (citar-notes-paths '("~/org/roam/refs/"))
+  (citar-notes-paths '("~/org/roam/"))
   (citar-open-note-function 'orb-citar-edit-note)
   (citar-at-point-function 'embark-act)
   ; templates
@@ -391,6 +391,7 @@ Package-specific configurations.
   :straight (org-roam :type git :host github :repo "org-roam/org-roam")
   :init
   (require 'org-roam-dailies)
+  (org-roam-db-sync)
   :config
   (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:42}" 'face 'org-tag)))
   (org-roam-db-autosync-enable)
@@ -413,7 +414,7 @@ Package-specific configurations.
       :unarrowed t)
 
      ("r" "reading notes" plain "%?"
-      :target (file+head "refs/${citar-citekey}.org" "#+title: ${note-title}\n#+created: %U\n")
+      :target (file+head "${citar-citekey}.org" "#+title: ${note-title}\n#+created: %U\n")
       :unarrowed t)))
 
   ; org-roam-dailies templates
@@ -510,6 +511,19 @@ Package-specific configurations.
   (global-org-modern-mode))
 #+end_src
 
+** org-download
+#+begin_src emacs-lisp
+(use-package org-download
+  :straight (org-download :type git :host github :repo "abo-abo/org-download")
+  :after (org)
+  :custom
+  (org-download-screenshot-method "spectacle -r -o %s")
+  :bind
+  (:map org-mode-map
+	(("s-Y" . org-download-screenshot)
+	 ("s-y" . org-download-yank))))
+#+end_src
+
 ** magit
 #+begin_src emacs-lisp
 (use-package magit
@@ -523,10 +537,9 @@ Package-specific configurations.
 #+begin_src emacs-lisp
 (use-package magit-todos
   :straight (magit-todos :type git :host github :repo "alphapapa/magit-todos")
-  :custom
-  (magit-todos-nice nil)
-  (magit-todos-scanner 'magit-todos--scan-with-git-grep)
-  (add-to-list 'hl-todo-keyword-faces '("@audit" "#D2691F")))
+  :after magit
+  :config
+  (magit-todos-mode 1))
 #+end_src
 
 ** ssh-agency
