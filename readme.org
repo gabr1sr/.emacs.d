@@ -335,7 +335,8 @@ Package-specific configurations.
   :custom
   (org-confirm-babel-evaluate nil)
   (org-babel-do-load-languages 'org-babel-load-languages '((emacs-lisp . t)
-							   (rust . t))))
+							   (rust . t)
+							   (mermaid . t))))
 #+end_src
 
 ** ob-rust
@@ -752,4 +753,28 @@ Package-specific configurations.
   (add-to-list 'org-src-lang-modes '("plantuml" . plantuml))
   (setq plantuml-executable-path "/nix/store/xa0q4xl09cjgn4yna2z46vra8a1z0wps-user-environment/bin/plantuml"
 	plantuml-default-exec-mode 'executable))
+#+end_src
+
+** dockerfile-mode
+#+begin_src emacs-lisp
+(use-package dockerfile-mode
+  :straight (dockerfile-mode :type git :host github :repo "spotify/dockerfile-mode")
+  :custom
+  (dockerfile-mode-command "podman"))
+#+end_src
+
+** yaml-mode
+#+begin_src emacs-lisp
+(use-package yaml-mode
+  :straight (yaml-mode :type git :host github :repo "yoshiki/yaml-mode")
+  :mode "\\.yml\\'"
+  :mode "\\.yaml\\'"
+  :init
+  (add-to-list 'org-src-lang-modes '("yaml" . yaml)))
+#+end_src
+
+** ob-mermaid
+#+begin_src emacs-lisp
+(use-package ob-mermaid
+  :straight (ob-mermaid :type git :host github :repo "arnm/ob-mermaid"))
 #+end_src
