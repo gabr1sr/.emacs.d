@@ -175,7 +175,28 @@ Package-specific configurations.
 #+begin_src emacs-lisp
 (use-package company
   :straight (company :type git :host github :repo "company-mode/company-mode")
-  :hook (after-init . global-company-mode))
+  :hook (after-init . global-company-mode)
+  :custom
+  (company-minimum-prefix-length 2)
+  (company-tooltip-limit 14)
+  (company-tooltip-align-annotations t)
+  (company-require-match 'never)
+  (company-auto-commit nil)
+  (company-dabbrev-other-buffers nil)
+  (company-dabbrev-ignore-case nil)
+  (company-dabbrev-downcase nil))
+#+end_src
+
+** company-box
+#+begin_src emacs-lisp
+(use-package company-box
+  :straight (company-box :type git :host github :repo "sebastiencs/company-box")
+  :after company
+  :hook (company-mode . company-box-mode)
+  :custom
+  (company-box-show-single-candidate t)
+  (company-box-backends-colors nil)
+  (company-box-tooltip-limit 50))
 #+end_src
 
 ** vertico
@@ -777,4 +798,66 @@ Package-specific configurations.
 #+begin_src emacs-lisp
 (use-package ob-mermaid
   :straight (ob-mermaid :type git :host github :repo "arnm/ob-mermaid"))
+#+end_src
+
+** vterm
+#+begin_src emacs-lisp
+(use-package vterm
+  :straight (vterm :type git :host github :repo "akermu/emacs-libvterm"))
+#+end_src
+
+** org-tree-slide
+#+begin_src emacs-lisp
+(use-package org-tree-slide
+  :straight (org-tree-slide :type git :host github :repo "takaxp/org-tree-slide")
+  :bind
+  (:map org-tree-slide-mode-map
+	("C->" . org-tree-slide-move-next-tree)
+	("C-<" . org-tree-slide-move-previous-tree))
+  (:map org-mode-map
+	("C-c n p" . org-tree-slide-mode)
+	("C-c n P" . org-tree-slide-skip-done-toggle)))
+#+end_src
+
+** writeroom-mode
+#+begin_src emacs-lisp
+(use-package writeroom-mode
+  :straight (writeroom-mode :type git :host github :repo "joostkremers/writeroom-mode")
+  :bind
+  ("C-M-z" . writeroom-mode)
+  (:map writeroom-mode-map
+	("C-M-<" . writeroom-decrease-width)
+	("C-M->" . writeroom-increase-width)
+	("C-M-=" . writeroom-adjust-width)))
+#+end_src
+
+** mixed-pitch
+#+begin_src emacs-lisp
+(use-package mixed-pitch
+  :straight (mixed-pitch :type git :host gitlab :repo "jabranham/mixed-pitch")
+  :hook (text-mode . mixed-pitch-mode))
+#+end_src
+
+** flycheck
+#+begin_src emacs-lisp
+(use-package flycheck
+  :straight (flycheck :type git :host github :repo "flycheck/flycheck")
+  :init
+  (global-flycheck-mode))
+#+end_src
+
+** flycheck-posframe
+#+begin_src emacs-lisp
+(use-package flycheck-posframe
+  :straight (flycheck-posframe :type git :host github :repo "alexmurray/flycheck-posframe")
+  :after flycheck
+  :hook (flycheck-mode . flycheck-posframe-mode))
+#+end_src
+
+** flycheck-popup-tip
+#+begin_src emacs-lisp
+(use-package flycheck-popup-tip
+  :straight (flycheck-popup-tip :type git :host github :repo "flycheck/flycheck-popup-tip")
+  :after flycheck
+  :hook (flycheck-mode . flycheck-popup-tip-mode))
 #+end_src
