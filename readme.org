@@ -12,20 +12,7 @@ This is my Emacs Literate Configuration. I'm currently using it in my [[https://
 Garbage Collector Optimizations.
 
 #+begin_src emacs-lisp
-(setq gc-cons-threshold-original gc-cons-threshold)
-(setq gc-cons-threshold (* 1024 1024 100))
-
-(setq file-name-handler-alist-original file-name-handler-alist)
-(setq file-name-handler-alist nil)
-
-(run-with-idle-timer
- 5 nil
- (lambda ()
-   (setq gc-cons-threshold gc-cons-threshold-original)
-   (setq file-name-handler-alist file-name-handler-alist-original)
-   (makunbound 'gc-cons-threshold-original)
-   (makunbound 'file-name-handler-alist-original)
-   (message "gc-cons-threshold and file-name-handler-alist restored")))
+(setq gc-cons-threshold 33554432)
 #+end_src
 
 * Global Variables
@@ -331,6 +318,15 @@ Package-specific configurations.
        "* TODO %?\nSCHEDULED: %^t\n%U\n%i"
        :empty-lines 1)
 
+     ("s" "Studying")
+      ("ss" "Study" entry (file+olp "~/org/study.org" "Inbox")
+       "* TODO %?\n%U\n%i"
+       :empty-lines 1)
+
+      ("sc" "Scheduled Study" entry (file+olp "~/org/study.org" "Inbox")
+       "* TODO %?\nSCHEDULED: %^t\n%U\n%i"
+       :empty-lines 1)
+
      ("a" "Auditing")
       ("af" "Audit Finding" entry (file (lambda () (concat projectile-project-root "findings.org")))
        (file "~/org/templates/audit_finding.org"))))
@@ -612,7 +608,12 @@ Package-specific configurations.
 #+begin_src emacs-lisp
 (use-package eglot
   :straight (eglot :type built-in)
+  :init
+  (setq eglot-sync-connect 1
+	eglot-autoshutdown t
+	eglot-auto-display-help-buffer nil)
   :config
+  (setq eglot-stay-out-of '(flymake))
   (setq-default eglot-workspace-configuration
 		    '((solidity
 		       (defaultCompiler . "remote")
@@ -810,6 +811,7 @@ Package-specific configurations.
 #+begin_src emacs-lisp
 (use-package org-tree-slide
   :straight (org-tree-slide :type git :host github :repo "takaxp/org-tree-slide")
+  :after org
   :bind
   (:map org-tree-slide-mode-map
 	("C->" . org-tree-slide-move-next-tree)
@@ -829,13 +831,6 @@ Package-specific configurations.
 	("C-M-<" . writeroom-decrease-width)
 	("C-M->" . writeroom-increase-width)
 	("C-M-=" . writeroom-adjust-width)))
-#+end_src
-
-** mixed-pitch
-#+begin_src emacs-lisp
-(use-package mixed-pitch
-  :straight (mixed-pitch :type git :host gitlab :repo "jabranham/mixed-pitch")
-  :hook (text-mode . mixed-pitch-mode))
 #+end_src
 
 ** flycheck
@@ -860,4 +855,12 @@ Package-specific configurations.
   :straight (flycheck-popup-tip :type git :host github :repo "flycheck/flycheck-popup-tip")
   :after flycheck
   :hook (flycheck-mode . flycheck-popup-tip-mode))
+#+end_src
+
+** flycheck-eglot
+#+begin_src emacs-lisp
+(use-package flycheck-eglot
+  :straight (flycheck-eglot :type git :host github :repo "flycheck/flycheck-eglot")
+  :after (eglot flycheck)
+  :hook (eglot-managed-mode . flycheck-eglot-mode))
 #+end_src
