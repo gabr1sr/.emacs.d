@@ -44,7 +44,27 @@ Variables used for Git-related things.
        (find-file-noselect file)
      (org-md-export-to-markdown)))
        (file-expand-wildcards  "*.org"))))
+
+; based on:
+; - https://gluer.org/blog/2023/automating-ox-hugo-slugs-even-more/
+; - https://ox-hugo.scripter.co/doc/org-capture-setup/
+(defun org-hugo-new-subtree-post-capture-template ()
+  (let* ((title (read-from-minibuffer "Post Title: "))
+	 (slug (org-hugo-slug title)))
+    (mapconcat #'identity
+	       `(
+		 ,(concat "** TODO " title)
+		 ":PROPERTIES:"
+		 ,(concat ":EXPORT_FILE_NAME: " slug)
+		 ,(concat ":EXPORT_HUGO_SLUG: " slug)
+		 ":EXPORT_DESCRIPTION: description goes here"
+		 ":END:"
+		 "%?")
+	       "\n")))
 #+end_src
+
+#+RESULTS:
+: org-hugo-new-subtree-post-capture-template
 
 * Straight.el Bootstrap
 Bootstrapping straight.el.
@@ -327,6 +347,11 @@ Package-specific configurations.
        "* TODO %?\nSCHEDULED: %^t\n%U\n%i"
        :empty-lines 1)
 
+     ("b" "Blog")
+      ("bp" "Blog Post" entry (file+olp "~/org/blog.org" "Posts")
+       (function org-hugo-new-subtree-post-capture-template)
+       :empty-lines 1)
+
      ("a" "Auditing")
       ("af" "Audit Finding" entry (file (lambda () (concat projectile-project-root "findings.org")))
        (file "~/org/templates/audit_finding.org"))))
@@ -341,7 +366,7 @@ Package-specific configurations.
 (use-package org-agenda
   :straight (org-agenda :type built-in)
   :custom
-  (org-agenda-files '("habits.org" "tasks.org" "study.org"))
+  (org-agenda-files '("habits.org" "tasks.org" "study.org" "~/org/roam/daily/"))
   (org-agenda-start-with-log-mode t))
 #+end_src
 
@@ -437,7 +462,16 @@ Package-specific configurations.
 
   ; org-roam-dailies templates
   (org-roam-dailies-capture-templates
-   '(("d" "default" entry "* %<%I:%M %p>: %?"
+   '(("d" "default" entry "* %?\nCREATED: %U\n%i"
+      :empty-lines 1
+      :target (file+head "%<%Y-%m-%d>.org" "#+title: %<%Y-%m-%d>\n"))
+
+     ("s" "scheduled study" entry "* TODO estudar: %?\nSCHEDULED: %^t\nCREATED: %U\n%i"
+      :empty-lines 1
+      :target (file+head "%<%Y-%m-%d>.org" "#+title: %<%Y-%m-%d>\n"))
+
+     ("t" "scheduled task" entry "* TODO tarefa: %?\nSCHEDULED: %^t\nCREATED: %U\n%i"
+      :empty-lines 1
       :target (file+head "%<%Y-%m-%d>.org" "#+title: %<%Y-%m-%d>\n"))))
   
   :bind
@@ -535,7 +569,7 @@ Package-specific configurations.
   :straight (org-download :type git :host github :repo "abo-abo/org-download")
   :after (org)
   :custom
-  (org-download-screenshot-method "spectacle -r -o %s")
+  (org-download-screenshot-method "grim -g \"$(slurp)\" -o %s")
   :bind
   (:map org-mode-map
 	(("s-Y" . org-download-screenshot)
