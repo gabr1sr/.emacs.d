@@ -3,6 +3,38 @@
 
 This is my Emacs Literate Configuration. I'm currently using it in my [[https://github.com/gabr1sr/nixos][NixOS setup]]. You can modify and use as you want.
 
+* How to use
+To export all ~emacs-lisp~ code blocks to ~init.el~ file, you must use ~C-c C-v t~ or ~M-x org-babel-tangle~.
+
+* Support
+This configuration has support for the following topcs:
+
+** Programming Languages
+- Rust
+- Solidity
+- Erlang
+- Elixir
+- JavaScript
+- TypeScript
+- Nix
+- Lean4
+
+** Markup / Configuration Languages
+- TOML
+- YAML
+- Dockerfile
+- Markdown
+- Mermaid
+- PlantUML
+- Editorconfig
+
+** Others
+- Org-roam
+- Biblio
+- Citar
+- PDFView
+- VTerm
+
 * Early Init File
 #+begin_src emacs-lisp :tangle ~/.emacs.d/early-init.el
 (setq package-enable-at-startup nil)
@@ -53,18 +85,15 @@ Variables used for Git-related things.
 	 (slug (org-hugo-slug title)))
     (mapconcat #'identity
 	       `(
-		 ,(concat "** TODO " title)
+		 ,(concat "** POST " title)
 		 ":PROPERTIES:"
 		 ,(concat ":EXPORT_FILE_NAME: " slug)
 		 ,(concat ":EXPORT_HUGO_SLUG: " slug)
-		 ":EXPORT_DESCRIPTION: description goes here"
+		 ":EXPORT_DESCRIPTION: description"
 		 ":END:"
 		 "%?")
 	       "\n")))
 #+end_src
-
-#+RESULTS:
-: org-hugo-new-subtree-post-capture-template
 
 * Straight.el Bootstrap
 Bootstrapping straight.el.
@@ -150,7 +179,7 @@ Minimal adjustments to solve compatibility issues.
 
 ** pdf-view
 #+begin_src emacs-lisp
-(dolist (mode '(pdf-view-mode-hook))
+(dolist (mode '(pdf-view-mode-hook writeroom-mode-hook))
   (add-hook mode (lambda () (display-line-numbers-mode 0))))
 #+end_src
 
@@ -163,6 +192,16 @@ Tree Sitter languages support.
 	(heex "https://github.com/phoenixframework/tree-sitter-heex")
 	(elixir "https://github.com/elixir-lang/tree-sitter-elixir")
 	(javascript "https://github.com/tree-sitter/tree-sitter-javascript")
+	(typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+	(tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+	(dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
+	(make "https://github.com/alemuller/tree-sitter-make")
+	(markdown "https://github.com/ikatyang/tree-sitter-markdown")
+	(python "https://github.com/tree-sitter/tree-sitter-python")
+	(toml "https://github.com/tree-sitter/tree-sitter-toml")
+	(yaml "https://github.com/ikatyang/tree-sitter-yaml")
+	(html "https://github.com/tree-sitter/tree-sitter-html")
+	(css "https://github.com/tree-sitter/tree-sitter-css")
 	(json "https://github.com/tree-sitter/tree-sitter-json")))
 #+end_src
 
@@ -263,6 +302,48 @@ Package-specific configurations.
 #+begin_src emacs-lisp
 (use-package citar
   :straight (citar :type git :host github :repo "emacs-citar/citar")
+  :config
+  ; icons
+  (defvar citar-indicator-files-icons
+    (citar-indicator-create
+     :symbol (nerd-icons-faicon
+	      "nf-fa-file_o"
+	      :face 'nerd-icons-green
+	      :v-adjust -0.1)
+     :function #'citar-has-files
+     :padding " "
+     :tag "has:files"))
+  (defvar citar-indicator-links-icons
+    (citar-indicator-create
+     :symbol (nerd-icons-faicon
+              "nf-fa-link"
+              :face 'nerd-icons-orange
+              :v-adjust 0.01)
+     :function #'citar-has-links
+     :padding "  "
+     :tag "has:links"))
+  (defvar citar-indicator-notes-icons
+    (citar-indicator-create
+     :symbol (nerd-icons-codicon
+              "nf-cod-note"
+              :face 'nerd-icons-blue
+              :v-adjust -0.3)
+     :function #'citar-has-notes
+     :padding "    "
+     :tag "has:notes"))
+  (defvar citar-indicator-cited-icons
+    (citar-indicator-create
+     :symbol (nerd-icons-faicon
+              "nf-fa-circle_o"
+              :face 'nerd-icon-green)
+     :function #'citar-is-cited
+     :padding "  "
+     :tag "is:cited"))
+  (setq citar-indicators
+	(list citar-indicator-files-icons
+	      citar-indicator-links-icons
+	      citar-indicator-notes-icons
+	      citar-indicator-cited-icons))
   :custom
   (citar-bibliography global/bibliography-list)
   (citar-notes-paths '("~/org/roam/"))
@@ -305,7 +386,10 @@ Package-specific configurations.
   :custom
   ; org
   (org-directory (file-truename "~/org/"))
-  (org-todo-keywords '((sequence "TODO(t)" "|" "DONE(d!)" "CANCELED(c@)")))
+  (org-todo-keywords '((sequence "TODO(t)" "ONGOING(o)" "WAIT(w@)" "|" "DONE(d!)" "CANCELED(c@)")
+		       (sequence "[ ](T)" "[-](O)" "[?](W)" "|" "[X](D)")
+		       (sequence "POST(p)" "|" "POSTED(P!)")
+		       (sequence "TOREAD(r)" "|" "READ(R!)")))
   
   ; indentation
   (org-startup-truncated t)
@@ -331,26 +415,34 @@ Package-specific configurations.
        :empty-lines 1)
 
       ("tl" "Located Task" entry (file+olp "~/org/tasks.org" "Inbox")
-       "* TODO %?\n%U\n%a\n%i"
+       "* TODO %? :task:\n%U\n%a\n%i"
        :empty-lines 1)
 
       ("ts" "Scheduled Task" entry (file+olp "~/org/tasks.org" "Inbox")
-       "* TODO %?\nSCHEDULED: %^t\n%U\n%i"
+       "* TODO %? :task:\nSCHEDULED: %^t\n%U\n%i"
        :empty-lines 1)
 
      ("s" "Studying")
       ("ss" "Study" entry (file+olp "~/org/study.org" "Inbox")
-       "* TODO %?\n%U\n%i"
+       "* TODO %? :study:\n%U\n%i"
        :empty-lines 1)
 
       ("sc" "Scheduled Study" entry (file+olp "~/org/study.org" "Inbox")
-       "* TODO %?\nSCHEDULED: %^t\n%U\n%i"
+       "* TODO %? :study:\nSCHEDULED: %^t\n%U\n%i"
        :empty-lines 1)
 
      ("b" "Blog")
       ("bp" "Blog Post" entry (file+olp "~/org/blog.org" "Posts")
        (function org-hugo-new-subtree-post-capture-template)
        :empty-lines 1)
+
+     ("c" "Cooking")
+      ("ci" "Cookbook Import" entry (file "~/org/cookbook.org")
+       "%(org-chef-get-recipe-from-url)"
+       :empty-lines 1)
+
+      ("cm" "Cookbook Manual" entry (file "~/org/cookbook.org")
+       "* %^{Recipe title: }\n  :PROPERTIES:\n  :source-url:\n  :servings:\n  :prep-time:\n  :cook-time:\n  :ready-in:\n  :END:\n** Ingredients\n   %?\n\n** Directions\n\n")
 
      ("a" "Auditing")
       ("af" "Audit Finding" entry (file (lambda () (concat projectile-project-root "findings.org")))
@@ -366,8 +458,48 @@ Package-specific configurations.
 (use-package org-agenda
   :straight (org-agenda :type built-in)
   :custom
-  (org-agenda-files '("habits.org" "tasks.org" "study.org" "~/org/roam/daily/"))
-  (org-agenda-start-with-log-mode t))
+  (org-agenda-files '("habits.org" "tasks.org" "study.org" "blog.org" "~/org/roam/daily/"))
+  (org-agenda-start-with-log-mode t)
+  (org-agenda-custom-commands
+   '(("z" "Super view"
+      ((agenda "" ((org-agenda-span 'day)
+		   (org-super-agenda-groups
+		    '((:name "Concluídos"
+			     :time-grid t
+			     :order 1)
+		      (:name "Hábitos"
+			     :habit t
+			     :order 2)
+		      (:name "Importantes"
+			     :priority "A"
+			     :order 3)
+		      (:name "Estudando"
+			     :tag "study"
+			     :order 4)
+		      (:name "Tarefas"
+			     :tag "task"
+			     :order 5)))))
+       (alltodo "" ((org-agenda-overriding-header "")
+		    (org-super-agenda-groups
+		      '((:name "Próximos"
+			       :and (:scheduled future :not (:habit t))
+			       :order 1)
+			(:name "Esperando"
+			       :todo "WAIT"
+			       :order 2)
+			(:name "Livros"
+			       :todo "TOREAD"
+			       :order 3)
+			(:name "Publicar"
+			       :todo "POST"
+			       :order 4)
+			(:name "Agendar"
+			       :and (:todo "TODO" :scheduled nil)
+			       :order 5)
+			(:name "Estudar"
+			       :and (:tag "study" :scheduled nil)
+			       :order 6)
+			(:discard (:anything t)))))))))))
 #+end_src
 
 ** org-babel
@@ -466,11 +598,11 @@ Package-specific configurations.
       :empty-lines 1
       :target (file+head "%<%Y-%m-%d>.org" "#+title: %<%Y-%m-%d>\n"))
 
-     ("s" "scheduled study" entry "* TODO estudar: %?\nSCHEDULED: %^t\nCREATED: %U\n%i"
+     ("s" "scheduled study" entry "* TODO %? :study:\nSCHEDULED: %^t\nCREATED: %U\n%i"
       :empty-lines 1
       :target (file+head "%<%Y-%m-%d>.org" "#+title: %<%Y-%m-%d>\n"))
 
-     ("t" "scheduled task" entry "* TODO tarefa: %?\nSCHEDULED: %^t\nCREATED: %U\n%i"
+     ("t" "scheduled task" entry "* TODO %? :task:\nSCHEDULED: %^t\nCREATED: %U\n%i"
       :empty-lines 1
       :target (file+head "%<%Y-%m-%d>.org" "#+title: %<%Y-%m-%d>\n"))))
   
@@ -751,7 +883,7 @@ Package-specific configurations.
   (add-to-list 'org-src-lang-modes '("json" . json-ts)))
 #+end_src
 
-** emojify
+** COMMENT emojify
 #+begin_src emacs-lisp
 (use-package emojify
   :straight (emojify :type git :host github :repo "iqbalansari/emacs-emojify")
@@ -807,7 +939,7 @@ Package-specific configurations.
   :mode "\\.plantuml\\'"
   :init
   (add-to-list 'org-src-lang-modes '("plantuml" . plantuml))
-  (setq plantuml-executable-path "/nix/store/xa0q4xl09cjgn4yna2z46vra8a1z0wps-user-environment/bin/plantuml"
+  (setq plantuml-executable-path "plantuml"
 	plantuml-default-exec-mode 'executable))
 #+end_src
 
@@ -846,6 +978,7 @@ Package-specific configurations.
 (use-package org-tree-slide
   :straight (org-tree-slide :type git :host github :repo "takaxp/org-tree-slide")
   :after org
+  :commands (org-tree-slide-mode org-tree-slide-move-next-tree org-tree-slide-move-previous-tree org-tree-slide-skip-done-toggle)
   :bind
   (:map org-tree-slide-mode-map
 	("C->" . org-tree-slide-move-next-tree)
@@ -859,6 +992,9 @@ Package-specific configurations.
 #+begin_src emacs-lisp
 (use-package writeroom-mode
   :straight (writeroom-mode :type git :host github :repo "joostkremers/writeroom-mode")
+  :custom
+  (writeroom-global-effects nil)
+  (writeroom-maximize-window nil)
   :bind
   ("C-M-z" . writeroom-mode)
   (:map writeroom-mode-map
@@ -897,4 +1033,83 @@ Package-specific configurations.
   :straight (flycheck-eglot :type git :host github :repo "flycheck/flycheck-eglot")
   :after (eglot flycheck)
   :hook (eglot-managed-mode . flycheck-eglot-mode))
+#+end_src
+
+** erc
+#+begin_src emacs-lisp
+(use-package erc
+  :straight (erc :type built-in)
+  :config
+  (setq erc-track-shorten-start 8
+	erc-kill-buffer-on-part t
+	erc-auto-query 'bury))
+#+end_src
+
+** orderless
+#+begin_src emacs-lisp
+(use-package orderless
+  :straight (orderless :type git :host github :repo "oantolin/orderless")
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion))))
+  :config
+  (defun just-one-face (fn &rest args)
+    (let ((orderless-match-faces [completions-common-part]))
+      (apply fn args)))
+
+  (advice-add 'company-capf--candidates :around #'just-one-face)
+  (setq orderless-component-separator "[ &]"))
+#+end_src
+
+** all-the-icons
+#+begin_src emacs-lisp
+(use-package all-the-icons
+  :straight (all-the-icons :type git :host github :repo "domtronn/all-the-icons.el")
+  :if (display-graphic-p))
+#+end_src
+
+** mixed-pitch
+#+begin_src emacs-lisp
+(use-package mixed-pitch
+  :straight (mixed-pitch :type git :host gitlab :repo "jabranham/mixed-pitch")
+  :hook (writeroom-mode . +toggle-mixed-pitch-mode-h)
+  :config
+  (defun +toggle-mixed-pitch-mode-h ()
+    "Enable `mixed-pitch-mode` when in `writeroom-mode`."
+    (when (apply #'derived-mode-p '(org-mode markdown-mode))
+      (mixed-pitch-mode (if writeroom-mode +1 -1)))))
+#+end_src
+
+** org-modern-indent
+#+begin_src emacs-lisp
+(use-package org-modern-indent
+  :straight (org-modern-indent :type git :host github :repo "jdtsmith/org-modern-indent")
+  :hook (org-modern-mode . org-modern-indent-mode))
+#+end_src
+
+** org-super-agenda
+#+begin_src emacs-lisp
+(use-package org-super-agenda
+  :straight (org-super-agenda :type git :host github :repo "alphapapa/org-super-agenda")
+  :hook (org-agenda-mode . org-super-agenda-mode))
+#+end_src
+
+** c-mode
+#+begin_src emacs-lisp
+(use-package c-mode
+  :straight (c-mode :type built-in)
+  :hook (c-mode . eglot-ensure))
+#+end_src
+
+** c++-mode
+#+begin_src emacs-lisp
+(use-package c++-mode
+  :straight (c++-mode :type built-in)
+  :hook (c++-mode . eglot-ensure))
+#+end_src
+
+** org-chef
+#+begin_src emacs-lisp
+(use-package org-chef
+  :straight (org-chef :type git :host github :repo "Chobbes/org-chef"))
 #+end_src
