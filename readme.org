@@ -821,7 +821,8 @@ Package-specific configurations.
 #+begin_src emacs-lisp
 (use-package elixir-ts-mode
   :straight (elixir-ts-mode :type git :host github :repo "wkirschbaum/elixir-ts-mode")
-  :hook (elixir-ts-mode . eglot-ensure)
+  :hook ((elixir-ts-mode . eglot-ensure)
+	 (elixir-ts-mode . combobulate-mode))
   :init
   (add-to-list 'org-src-lang-modes '("elixir" . elixir-ts)))
 #+end_src
@@ -830,7 +831,8 @@ Package-specific configurations.
 #+begin_src emacs-lisp
 (use-package heex-ts-mode
   :straight (heex-ts-mode :type git :host github :repo "wkirschbaum/heex-ts-mode")
-  :hook (heex-ts-mode . eglot-ensure)
+  :hook ((heex-ts-mode . eglot-ensure)
+	 (heex-ts-mode . combobulate-mode))
   :init
   (add-to-list 'org-src-lang-modes '("heex" . heex-ts)))
 #+end_src
@@ -840,7 +842,8 @@ Package-specific configurations.
 (use-package rust-ts-mode
   :straight (rust-ts-mode :type built-in)
   :mode "\\.rs\\'"
-  :hook (rust-ts-mode . eglot-ensure)
+  :hook ((rust-ts-mode . eglot-ensure)
+	 (rust-ts-mode . combobulate-mode))
   :init
   (add-to-list 'org-src-lang-modes '("rust" . rust-ts)))
 #+end_src
@@ -850,7 +853,8 @@ Package-specific configurations.
 (use-package js-ts-mode
   :straight (js-ts-mode :type built-in)
   :mode "\\.js\\'"
-  :hook (js-ts-mode . eglot-ensure)
+  :hook ((js-ts-mode . eglot-ensure)
+	 (js-ts-mode . combobulate-mode))
   :init
   (add-to-list 'major-mode-remap-alist '(javascript-mode . js-ts-mode))
   (add-to-list 'org-src-lang-modes '("javascript" . js-ts)))
@@ -861,7 +865,8 @@ Package-specific configurations.
 (use-package typescript-ts-mode
   :straight (typescript-ts-mode :type built-in)
   :mode "\\.ts\\'"
-  :hook (typescript-ts-mode . eglot-ensure)
+  :hook ((typescript-ts-mode . eglot-ensure)
+	 (typescript-ts-mode . combobulate-mode))
   :init
   (add-to-list 'major-mode-remap-alist '(typescript-mode . typescript-ts-mode))
   (add-to-list 'org-src-lang-modes '("typescript" . typescript-ts)))
@@ -872,7 +877,8 @@ Package-specific configurations.
 (use-package tsx-ts-mode
   :straight (tsx-ts-mode :type built-in)
   :mode "\\.tsx\\'"
-  :hook (tsx-ts-mode . eglot-ensure)
+  :hook ((tsx-ts-mode . eglot-ensure)
+	 (tsx-ts-mode . combobulate-mode))
   :init
   (add-to-list 'org-src-lang-modes '("tsx" . tsx-ts)))
 #+end_src
@@ -882,7 +888,8 @@ Package-specific configurations.
 (use-package json-ts-mode
   :straight (json-ts-mode :type built-in)
   :mode "\\.json\\'"
-  :hook (json-ts-mode . eglot-ensure)
+  :hook ((json-ts-mode . eglot-ensure)
+	 (json-ts-mode . combobulate-mode))
   :init
   (add-to-list 'major-mode-remap-alist '(json-mode . json-ts-mode))
   (add-to-list 'org-src-lang-modes '("json" . json-ts)))
@@ -894,7 +901,8 @@ Package-specific configurations.
   :straight (c-ts-mode :type built-in)
   :mode "\\.c\\'"
   :mode "\\.h\\'"
-  :hook (c-ts-mode . eglot-ensure)
+  :hook ((c-ts-mode . eglot-ensure)
+	 (c-ts-mode . combobulate-mode))
   :init
   ; (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
   (add-to-list 'org-src-lang-modes '("c" . c-ts)))
@@ -907,7 +915,8 @@ Package-specific configurations.
   :mode "\\.cpp\\'"
   :mode "\\.cxx\\'"
   :mode "\\.hpp\\'"
-  :hook (c++-ts-mode . eglot-ensure)
+  :hook ((c++-ts-mode . eglot-ensure)
+	 (c++-ts-mode . combobulate-mode))
   :init
   ; (add-to-list 'major-mode-remap-alist '(c++-mode . c++-ts-mode))
   (add-to-list 'org-src-lang-modes '("c++" . c++-ts))
@@ -1125,22 +1134,16 @@ Package-specific configurations.
   :hook (org-agenda-mode . org-super-agenda-mode))
 #+end_src
 
-** COMMENT c-mode
-#+begin_src emacs-lisp
-(use-package c-mode
-  :straight (c-mode :type built-in)
-  :hook (c-mode . eglot-ensure))
-#+end_src
-
-** COMMENT c++-mode
-#+begin_src emacs-lisp
-(use-package c++-mode
-  :straight (c++-mode :type built-in)
-  :hook (c++-mode . eglot-ensure))
-#+end_src
-
 ** org-chef
 #+begin_src emacs-lisp
 (use-package org-chef
   :straight (org-chef :type git :host github :repo "Chobbes/org-chef"))
+#+end_src
+
+** combobulate
+#+begin_src emacs-lisp
+(use-package combobulate
+  :straight (combobulate :type git :host github :repo "mickeynp/combobulate")
+  :preface
+  (setq combobulate-key-prefix "C-c o"))
 #+end_src
