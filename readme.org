@@ -394,7 +394,8 @@ Package-specific configurations.
   (org-todo-keywords '((sequence "TODO(t)" "ONGOING(o)" "WAIT(w@)" "|" "DONE(d!)" "CANCELED(c@)")
 		       (sequence "[ ](T)" "[-](O)" "[?](W)" "|" "[X](D)")
 		       (sequence "POST(p)" "|" "POSTED(P!)")
-		       (sequence "TOREAD(r)" "|" "READ(R!)")))
+		       (sequence "TOREAD(r)" "|" "READ(R!)")
+		       (sequence "TOLEARN(l)" "|" "LEARNED(L!)")))
   
   ; indentation
   (org-startup-truncated t)
@@ -415,36 +416,53 @@ Package-specific configurations.
   ; templates
   (org-capture-templates
    '(("t" "Tasks")
-      ("tt" "Task" entry (file+olp "~/org/tasks.org" "Inbox")
-       "* TODO %?\n%U\n%i"
-       :empty-lines 1)
+      ("tt" "Unscheduled Task" entry (file+olp "~/org/tasks.org" "Inbox")
+       "* TODO %?\n%i"
+       :empty-lines-after 1
+       :jump-to-captured t)
 
       ("tl" "Located Task" entry (file+olp "~/org/tasks.org" "Inbox")
-       "* TODO %? :task:\n%U\n%a\n%i"
-       :empty-lines 1)
+       "* TODO %? \n%a\n%i"
+       :empty-lines-after 1)
 
       ("ts" "Scheduled Task" entry (file+olp "~/org/tasks.org" "Inbox")
-       "* TODO %? :task:\nSCHEDULED: %^t\n%U\n%i"
-       :empty-lines 1)
+       "* TODO %? \nSCHEDULED: %^t\n%i"
+       :empty-lines-after 1)
 
-     ("s" "Studying")
-      ("ss" "Study" entry (file+olp "~/org/study.org" "Inbox")
-       "* TODO %? :study:\n%U\n%i"
-       :empty-lines 1)
+     ("l" "Learning")
+      ("ll" "Unscheduled Learning" entry (file+olp "~/org/learn.org" "Inbox")
+       "* TOLEARN %? \n%i"
+       :empty-lines-after 1
+       :jump-to-captured t)
 
-      ("sc" "Scheduled Study" entry (file+olp "~/org/study.org" "Inbox")
-       "* TODO %? :study:\nSCHEDULED: %^t\n%U\n%i"
-       :empty-lines 1)
+      ("ls" "Scheduled Learning" entry (file+olp "~/org/learn.org" "Inbox")
+       "* TOLEARN %? \nSCHEDULED: %^t\n%i"
+       :empty-lines-after 1)
+
+     ("r" "Reading")
+      ("rr" "Reading" entry (file+olp "~/org/read.org" "Inbox")
+       "* TOREAD %? \n%i"
+       :empty-lines-after 1
+       :jump-to-captured t)
+     
+      ("ra" "Reading Article" entry (file+olp "~/org/read.org" "Inbox")
+       "* TOREAD %? :article:\n%i"
+       :empty-lines-after 1)
+
+      ("rb" "Reading Book" entry (file+olp "~/org/read.org" "Inbox")
+       "* TOREAD %? :book:\n%i"
+       :empty-lines-after 1)
 
      ("b" "Blog")
       ("bp" "Blog Post" entry (file+olp "~/org/blog.org" "Posts")
        (function org-hugo-new-subtree-post-capture-template)
-       :empty-lines 1)
+       :empty-lines-after 1
+       :jump-to-captured t)
 
      ("c" "Cooking")
       ("ci" "Cookbook Import" entry (file "~/org/cookbook.org")
        "%(org-chef-get-recipe-from-url)"
-       :empty-lines 1)
+       :empty-lines-after 1)
 
       ("cm" "Cookbook Manual" entry (file "~/org/cookbook.org")
        "* %^{Recipe title: }\n  :PROPERTIES:\n  :source-url:\n  :servings:\n  :prep-time:\n  :cook-time:\n  :ready-in:\n  :END:\n** Ingredients\n   %?\n\n** Directions\n\n")
@@ -463,7 +481,7 @@ Package-specific configurations.
 (use-package org-agenda
   :straight (org-agenda :type built-in)
   :custom
-  (org-agenda-files '("habits.org" "tasks.org" "study.org" "blog.org" "~/org/roam/daily/"))
+  (org-agenda-files '("habits.org" "tasks.org" "learn.org" "blog.org" "read.org"))
   (org-agenda-start-with-log-mode t)
   (org-agenda-custom-commands
    '(("z" "Super view"
@@ -479,11 +497,14 @@ Package-specific configurations.
 			     :priority "A"
 			     :order 3)
 		      (:name "Estudando"
-			     :tag "study"
+			     :todo "TOLEARN"
 			     :order 4)
 		      (:name "Tarefas"
-			     :tag "task"
-			     :order 5)))))
+			     :todo "TODO"
+			     :order 5)
+		      (:name "Outros"
+			     :todo "[ ]"
+			     :order 6)))))
        (alltodo "" ((org-agenda-overriding-header "")
 		    (org-super-agenda-groups
 		      '((:name "Próximos"
@@ -502,7 +523,7 @@ Package-specific configurations.
 			       :and (:todo "TODO" :scheduled nil)
 			       :order 5)
 			(:name "Estudar"
-			       :and (:tag "study" :scheduled nil)
+			       :and (:todo "TOLEARN" :scheduled nil)
 			       :order 6)
 			(:discard (:anything t)))))))))))
 #+end_src
@@ -750,6 +771,7 @@ Package-specific configurations.
 #+begin_src emacs-lisp
 (use-package doom-themes
   :straight (doom-themes :type git :host github :repo "doomemacs/themes")
+  :if (display-graphic-p)
   :config
   (setq doom-themes-enable-bold t
 	      doom-themes-enable-italic t)
@@ -762,6 +784,7 @@ Package-specific configurations.
 #+begin_src emacs-lisp
 (use-package doom-modeline
   :straight (doom-modeline :type git :host github :repo "seagle0128/doom-modeline")
+  :if (display-graphic-p)
   :hook (after-init . doom-modeline-mode))
 #+end_src
 
@@ -793,7 +816,7 @@ Package-specific configurations.
   (add-to-list 'eglot-server-programs
 	           '(solidity-mode . ("vscode-solidity-server" "--stdio")))
   (add-to-list 'eglot-server-programs
-	           '((elixir-ts-mode heex-ts-mode) . ("language_server.bat"))))
+	       '((elixir-ts-mode heex-ts-mode) . ("elixir-ls"))))
 #+end_src
 
 ** solidity-mode
@@ -821,8 +844,7 @@ Package-specific configurations.
 #+begin_src emacs-lisp
 (use-package elixir-ts-mode
   :straight (elixir-ts-mode :type git :host github :repo "wkirschbaum/elixir-ts-mode")
-  :hook ((elixir-ts-mode . eglot-ensure)
-	 (elixir-ts-mode . combobulate-mode))
+  :hook (elixir-ts-mode . eglot-ensure)
   :init
   (add-to-list 'org-src-lang-modes '("elixir" . elixir-ts)))
 #+end_src
@@ -831,8 +853,7 @@ Package-specific configurations.
 #+begin_src emacs-lisp
 (use-package heex-ts-mode
   :straight (heex-ts-mode :type git :host github :repo "wkirschbaum/heex-ts-mode")
-  :hook ((heex-ts-mode . eglot-ensure)
-	 (heex-ts-mode . combobulate-mode))
+  :hook (heex-ts-mode . eglot-ensure)
   :init
   (add-to-list 'org-src-lang-modes '("heex" . heex-ts)))
 #+end_src
@@ -921,21 +942,6 @@ Package-specific configurations.
   ; (add-to-list 'major-mode-remap-alist '(c++-mode . c++-ts-mode))
   (add-to-list 'org-src-lang-modes '("c++" . c++-ts))
   (add-to-list 'org-src-lang-modes '("cpp" . c++-ts)))
-#+end_src
-
-** COMMENT emojify
-#+begin_src emacs-lisp
-(use-package emojify
-  :straight (emojify :type git :host github :repo "iqbalansari/emacs-emojify")
-  :hook (after-init . global-emojify-mode)
-  :custom
-  (when (member "Segoe UI Emoji" (font-family-list))
-    (set-fontset-font
-     t 'symbol (font-spec :family "Segoe UI Emoji") nil 'prepend))
-  (emojify-display-style 'unicode)
-  (emojify-emoji-styles '(unicode))
-  :bind
-  ("C-c ." . emojify-insert-emoji))
 #+end_src
 
 ** elcord
