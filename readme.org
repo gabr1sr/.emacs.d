@@ -66,17 +66,6 @@ Variables used for Git-related things.
 
 * Custom Functions
 #+begin_src emacs-lisp
-(defun publish-dir-org ()
-  "Publish all org files in a directory"
-  (interactive)
-  (save-excursion
-    (mapc
-     (lambda (file)
-       (with-current-buffer
-       (find-file-noselect file)
-     (org-md-export-to-markdown)))
-       (file-expand-wildcards  "*.org"))))
-
 ; based on:
 ; - https://gluer.org/blog/2023/automating-ox-hugo-slugs-even-more/
 ; - https://ox-hugo.scripter.co/doc/org-capture-setup/
@@ -1016,7 +1005,20 @@ Package-specific configurations.
 ** vterm
 #+begin_src emacs-lisp
 (use-package vterm
-  :straight (vterm :type git :host github :repo "akermu/emacs-libvterm"))
+  :straight (vterm :type git :host github :repo "akermu/emacs-libvterm")
+  :init
+  (defun run-vterm-custom ()
+    "This function will run vterm inside the project root or in the current directory."
+    (interactive)
+    (if (projectile-project-p) (projectile-run-vterm) (vterm default-directory)))
+
+  (defun run-vterm-other-window-custom ()
+    "This function will run vterm in other window inside the project root or in the current directory."
+    (interactive)
+    (if (projectile-project-p) (projectile-run-vterm-other-window) (vterm-other-window default-directory)))
+  
+  :bind (("C-c t" . run-vterm-custom)
+	 ("C-c C-t" . run-vterm-other-window-custom)))
 #+end_src
 
 ** org-tree-slide
