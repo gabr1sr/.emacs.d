@@ -1286,6 +1286,12 @@ Package-specific configurations.
 )
 #+end_src
 
+** consult-flycheck
+#+begin_src emacs-lisp
+(use-package consult-flycheck
+  :straight (consult-flycheck :type git :host github :repo "minad/consult-flycheck"))
+#+end_src
+
 ** embark-consult
 #+begin_src emacs-lisp
 ;; Consult users will also want the embark-consult package.
