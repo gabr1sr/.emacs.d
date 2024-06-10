@@ -798,10 +798,14 @@ Package-specific configurations.
   :config
   (setq eglot-stay-out-of '(flymake))
   (setq-default eglot-workspace-configuration
-		    '((solidity
-		       (defaultCompiler . "remote")
-		       (compileUsingRemoteVersion . "latest")
-		       (compileUsingLocalVersion . "solc"))))
+		'(:solidity (:defaultCompiler "remote"
+			     :compileUsingLocalVersion "latest"
+           		         :compileUsingLocalVersion "solc")
+		  :rust-analyzer (:procMacro (:ignored (:leptos_macro ["server"])))))
+		    ;; '((solidity
+		    ;;    (defaultCompiler . "remote")
+		    ;;    (compileUsingRemoteVersion . "latest")
+		    ;;    (compileUsingLocalVersion . "solc")))
   (add-to-list 'eglot-server-programs
 	           '(solidity-mode . ("vscode-solidity-server" "--stdio")))
   (add-to-list 'eglot-server-programs
