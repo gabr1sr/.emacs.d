@@ -44,6 +44,7 @@ This configuration has support for the following topcs:
 Garbage Collector Optimizations.
 
 #+begin_src emacs-lisp
+(setq read-process-output-max (* 10 1024 1024))
 (setq gc-cons-threshold 33554432)
 #+end_src
 
@@ -353,9 +354,10 @@ Package-specific configurations.
   (advice-add 'org-cite-insert :after #'(lambda (args)
 					              (save-excursion (left-char) (citar-org-update-prefix-suffix))))
   :bind
-  (:map org-mode-map :package org (("C-c b b" . citar-insert-citation)
-				   ("C-c b r" . citar-insert-reference)
-				   ("C-c b o" . citar-open-notes))))
+  (("C-c b b" . citar-insert-citation)
+   ("C-c b r" . citar-insert-reference)
+   ("C-c b f" . citar-open-note)
+   ("C-c b o" . citar-open)))
 #+end_src
 
 ** citar-embark
@@ -401,6 +403,9 @@ Package-specific configurations.
 
   ; latex preview
   (org-format-latex-options (plist-put org-format-latex-options :scale 2.0))
+
+  ; don't show emphasis markers
+  (org-hide-emphasis-markers t)
   
   ; templates
   (org-capture-templates
@@ -411,26 +416,34 @@ Package-specific configurations.
        :jump-to-captured t)
 
       ("tl" "Located Task" entry (file+olp "~/org/tasks.org" "Inbox")
-       "* TODO %? \n%a\n%i"
+       "* TODO %?\n%a\n%i"
        :empty-lines-after 1)
 
       ("ts" "Scheduled Task" entry (file+olp "~/org/tasks.org" "Inbox")
-       "* TODO %? \nSCHEDULED: %^t\n%i"
+       "* TODO %?\nSCHEDULED: %^t\n%i"
+       :empty-lines-after 1)
+
+      ("td" "Deadline Task" entry (file+olp "~/org/tasks.org" "Inbox")
+       "* TODO %?\nDEADLINE: %^t\n%i"
        :empty-lines-after 1)
 
      ("l" "Learning")
       ("ll" "Unscheduled Learning" entry (file+olp "~/org/learn.org" "Inbox")
-       "* TOLEARN %? \n%i"
+       "* TOLEARN %?\n%i"
        :empty-lines-after 1
        :jump-to-captured t)
 
       ("ls" "Scheduled Learning" entry (file+olp "~/org/learn.org" "Inbox")
-       "* TOLEARN %? \nSCHEDULED: %^t\n%i"
+       "* TOLEARN %?\nSCHEDULED: %^t\n%i"
+       :empty-lines-after 1)
+
+      ("ld" "Deadline Learning" entry (file+olp "~/org/learn.org" "Inbox")
+       "* TOLEARN %?\nDEADLINE: %^t\n%i"
        :empty-lines-after 1)
 
      ("r" "Reading")
       ("rr" "Reading" entry (file+olp "~/org/read.org" "Inbox")
-       "* TOREAD %? \n%i"
+       "* TOREAD %?\n%i"
        :empty-lines-after 1
        :jump-to-captured t)
      
@@ -489,15 +502,18 @@ Package-specific configurations.
 			     :todo "TOLEARN"
 			     :order 4)
 		      (:name "Tarefas"
-			     :todo "TODO"
+			     :and (:scheduled today :todo "TODO")
+			     :deadline today
 			     :order 5)
 		      (:name "Outros"
 			     :todo "[ ]"
-			     :order 6)))))
+			     :order 6)
+		      (:discard (:anything t))))))
        (alltodo "" ((org-agenda-overriding-header "")
 		    (org-super-agenda-groups
 		      '((:name "Próximos"
 			       :and (:scheduled future :not (:habit t))
+			       :deadline future
 			       :order 1)
 			(:name "Esperando"
 			       :todo "WAIT"
@@ -521,10 +537,16 @@ Package-specific configurations.
 #+begin_src emacs-lisp
 (use-package ob
   :straight (ob :type built-in)
+  :config
+  (defun org-babel-execute:c (body params)
+    "Execute a C BODY according to its header arguments PARAMS.
+This function is called by `org-babel-execute-src-block'."
+    (funcall 'org-babel-execute:C body params))
   :custom
   (org-confirm-babel-evaluate nil)
   (org-babel-do-load-languages 'org-babel-load-languages '((emacs-lisp . t)
 							   (rust . t)
+							   (c . t)
 							   (mermaid . t))))
 #+end_src
 
@@ -538,6 +560,12 @@ Package-specific configurations.
 #+begin_src emacs-lisp
 (use-package ob-async
   :straight (ob-async :type git :host github :repo "astahlman/ob-async"))
+#+end_src
+
+** ob-C
+#+begin_src emacs-lisp
+(use-package ob-C
+  :straight (ob-C :type built-in))
 #+end_src
 
 ** org-cite
@@ -605,6 +633,10 @@ Package-specific configurations.
 
      ("r" "reading notes" plain "%?"
       :target (file+head "${citar-citekey}.org" "#+title: ${note-title}\n#+created: %U\n")
+      :unarrowed t)
+
+     ("n" "nirvax notes" plain "- tags ::\n- source ::\n\n%?"
+      :target (file+head "nirvax/${slug}.org" "#+title: Nirvax: ${title}\n#+filetags: :nirvax:\n#+author: %n\n#+created: %U\n")
       :unarrowed t)))
 
   ; org-roam-dailies templates
@@ -627,7 +659,7 @@ Package-specific configurations.
    ("C-c n f" . org-roam-node-find)
    ("C-c n g" . org-roam-graph)
    ("C-c n i" . org-roam-node-insert)
-   ("C-c n c" . org-roam-node-capture)
+   ("C-c n c" . org-roam-capture)
    ("C-c n u" . org-roam-ui-mode)
    
    ; org-roam-dailies bind
@@ -738,6 +770,12 @@ Package-specific configurations.
   :straight (magit-todos :type git :host github :repo "alphapapa/magit-todos")
   :after magit
   :config
+  (setq hl-todo-keyword-faces
+	'(("TODO" . "#cc9393")
+	  ("AUDIT" . "#6e57d2")
+	  ("@audit" . "#6e57d2")))
+  (setq magit-todos-keywords-list '("TODO" "AUDIT" "@audit"))
+  (setq magit-todos-keyword-suffix "\\(?:[([][^])]+[])]\\)? ")
   (magit-todos-mode 1))
 #+end_src
 
@@ -783,6 +821,8 @@ Package-specific configurations.
   :straight (projectile type: git :host github :repo "bbatsov/projectile")
   :init
   (projectile-mode)
+  :bind
+  (:map projectile-command-map ("n" . projectile-add-known-project))
   :bind-keymap
   ("C-c p" . projectile-command-map))
 #+end_src
@@ -802,14 +842,40 @@ Package-specific configurations.
 			     :compileUsingLocalVersion "latest"
            		         :compileUsingLocalVersion "solc")
 		  :rust-analyzer (:procMacro (:ignored (:leptos_macro ["server"])))))
-		    ;; '((solidity
-		    ;;    (defaultCompiler . "remote")
-		    ;;    (compileUsingRemoteVersion . "latest")
-		    ;;    (compileUsingLocalVersion . "solc")))
   (add-to-list 'eglot-server-programs
 	           '(solidity-mode . ("vscode-solidity-server" "--stdio")))
   (add-to-list 'eglot-server-programs
 	       '((elixir-ts-mode heex-ts-mode) . ("elixir-ls"))))
+#+end_src
+
+** eglot-booster
+#+begin_src emacs-lisp
+(use-package eglot-booster
+  :straight (eglot-booster :type git :host github :repo "jdtsmith/eglot-booster")
+  :after eglot
+  :config
+  (eglot-booster-mode))
+#+end_src
+
+** eglot-x
+#+begin_src emacs-lisp
+(use-package eglot-x
+  :straight (eglot-x :type git :host github :repo "nemethf/eglot-x")
+  :after eglot
+  :config
+  (eglot-x-setup))
+#+end_src
+
+** apheleia
+#+begin_src emacs-lisp
+(use-package apheleia
+  :straight (apheleia :type git :host github :repo "radian-software/apheleia")
+  :config
+  (setf (alist-get 'rustfmt apheleia-formatters)
+	'("rustfmt" "--quiet" "--edition" "2021" "--emit" "stdout"))
+   (add-to-list 'apheleia-mode-alist '(rust-ts-mode . rustfmt))
+   (add-to-list 'apheleia-mode-alist '(rust-mode . rustfmt))
+  (apheleia-global-mode +1))
 #+end_src
 
 ** solidity-mode
@@ -867,6 +933,8 @@ Package-specific configurations.
 (use-package js-ts-mode
   :straight (js-ts-mode :type built-in)
   :mode "\\.js\\'"
+  :mode "\\.mjs\\'"
+  :mode "\\.cjs\\'"
   :hook ((js-ts-mode . eglot-ensure)
 	 (js-ts-mode . combobulate-mode))
   :init
@@ -879,6 +947,7 @@ Package-specific configurations.
 (use-package typescript-ts-mode
   :straight (typescript-ts-mode :type built-in)
   :mode "\\.ts\\'"
+  :mode "\\.mts\\'"
   :hook ((typescript-ts-mode . eglot-ensure)
 	 (typescript-ts-mode . combobulate-mode))
   :init
@@ -891,6 +960,7 @@ Package-specific configurations.
 (use-package tsx-ts-mode
   :straight (tsx-ts-mode :type built-in)
   :mode "\\.tsx\\'"
+  :mode "\\.jsx\\'"
   :hook ((tsx-ts-mode . eglot-ensure)
 	 (tsx-ts-mode . combobulate-mode))
   :init
@@ -1040,8 +1110,8 @@ Package-specific configurations.
   :commands (org-tree-slide-mode org-tree-slide-move-next-tree org-tree-slide-move-previous-tree org-tree-slide-skip-done-toggle)
   :bind
   (:map org-tree-slide-mode-map
-	("C->" . org-tree-slide-move-next-tree)
-	("C-<" . org-tree-slide-move-previous-tree))
+	("C-c s d" . org-tree-slide-move-next-tree)
+	("C-c s a" . org-tree-slide-move-previous-tree))
   (:map org-mode-map
 	("C-c n p" . org-tree-slide-mode)
 	("C-c n P" . org-tree-slide-skip-done-toggle)))
@@ -1125,6 +1195,19 @@ Package-specific configurations.
 (use-package all-the-icons
   :straight (all-the-icons :type git :host github :repo "domtronn/all-the-icons.el")
   :if (display-graphic-p))
+
+(use-package all-the-icons-dired
+  :straight (all-the-icons-dired :type git :host github :repo "jtbm37/all-the-icons-dired")
+  :if (display-graphic-p)
+  :hook (dired-mode . all-the-icons-dired-mode))
+
+(use-package all-the-icons-completion
+  :straight (all-the-icons-completion :type git :host github :repo "iyefrat/all-the-icons-completion")
+  :if (display-graphic-p)
+  :after (all-the-icons marginalia)
+  :hook (marginalia-mode . all-the-icons-completion-marginalia-setup)
+  :init
+  (all-the-icons-completion-mode))
 #+end_src
 
 ** mixed-pitch
@@ -1171,40 +1254,34 @@ Package-specific configurations.
 #+begin_src emacs-lisp
 (use-package consult
   :straight (consult :type git :host github :repo "minad/consult")
-  ;; Replace bindings. Lazily loaded due by `use-package'.
-  :bind (;; C-c bindings in `mode-specific-map'
-         ("C-c M-x" . consult-mode-command)
+  :hook (completion-list-mode . consult-preview-at-point-mode)
+  :bind (("C-c M-x" . consult-mode-command)
          ("C-c h" . consult-history)
          ("C-c k" . consult-kmacro)
          ("C-c m" . consult-man)
          ("C-c i" . consult-info)
          ([remap Info-search] . consult-info)
-         ;; C-x bindings in `ctl-x-map'
-         ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
-         ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
-         ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
-         ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
-         ("C-x t b" . consult-buffer-other-tab)    ;; orig. switch-to-buffer-other-tab
-         ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
-         ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
-         ;; Custom M-# bindings for fast register access
+         ("C-x M-:" . consult-complex-command)
+         ("C-x b" . consult-buffer)           
+         ("C-x 4 b" . consult-buffer-other-window)
+         ("C-x 5 b" . consult-buffer-other-frame)
+         ("C-x t b" . consult-buffer-other-tab)
+         ("C-x r b" . consult-bookmark)
+         ("C-x p b" . consult-project-buffer)
          ("M-#" . consult-register-load)
-         ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
+         ("M-'" . consult-register-store)
          ("C-M-#" . consult-register)
-         ;; Other custom bindings
-         ("M-y" . consult-yank-pop)                ;; orig. yank-pop
-         ;; M-g bindings in `goto-map'
+         ("M-y" . consult-yank-pop)
          ("M-g e" . consult-compile-error)
-         ("M-g f" . consult-flycheck)               ;; Alternative: consult-flymake
-         ("M-g g" . consult-goto-line)             ;; orig. goto-line
-         ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
-         ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
+         ("M-g f" . consult-flycheck)
+         ("M-g g" . consult-goto-line)
+         ("M-g M-g" . consult-goto-line)
+         ("M-g o" . consult-outline)
          ("M-g m" . consult-mark)
          ("M-g k" . consult-global-mark)
          ("M-g i" . consult-imenu)
          ("M-g I" . consult-imenu-multi)
-         ;; M-s bindings in `search-map'
-         ("M-s d" . consult-find)                  ;; Alternative: consult-fd
+         ("M-s d" . consult-find)
          ("M-s c" . consult-locate)
          ("M-s g" . consult-grep)
          ("M-s G" . consult-git-grep)
@@ -1213,81 +1290,34 @@ Package-specific configurations.
          ("M-s L" . consult-line-multi)
          ("M-s k" . consult-keep-lines)
          ("M-s u" . consult-focus-lines)
-         ;; Isearch integration
          ("M-s e" . consult-isearch-history)
          :map isearch-mode-map
-         ("M-e" . consult-isearch-history)         ;; orig. isearch-edit-string
-         ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
-         ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
-         ("M-s L" . consult-line-multi)            ;; needed by consult-line to detect isearch
-         ;; Minibuffer history
+         ("M-e" . consult-isearch-history)
+         ("M-s e" . consult-isearch-history)
+         ("M-s l" . consult-line)
+         ("M-s L" . consult-line-multi)
          :map minibuffer-local-map
-         ("M-s" . consult-history)                 ;; orig. next-matching-history-element
-         ("M-r" . consult-history))                ;; orig. previous-matching-history-element
-
-  ;; Enable automatic preview at point in the *Completions* buffer. This is
-  ;; relevant when you use the default completion UI.
-  :hook (completion-list-mode . consult-preview-at-point-mode)
-
-  ;; The :init configuration is always executed (Not lazy)
+         ("M-s" . consult-history)
+         ("M-r" . consult-history))
   :init
-
-  ;; Optionally configure the register formatting. This improves the register
-  ;; preview for `consult-register', `consult-register-load',
-  ;; `consult-register-store' and the Emacs built-ins.
   (setq register-preview-delay 0.5
         register-preview-function #'consult-register-format)
 
-  ;; Optionally tweak the register preview window.
-  ;; This adds thin lines, sorting and hides the mode line of the window.
   (advice-add #'register-preview :override #'consult-register-window)
 
-  ;; Use Consult to select xref locations with preview
   (setq xref-show-xrefs-function #'consult-xref
         xref-show-definitions-function #'consult-xref)
 
-  ;; Configure other variables and modes in the :config section,
-  ;; after lazily loading the package.
   :config
-
-  ;; Optionally configure preview. The default value
-  ;; is 'any, such that any key triggers the preview.
-  ;; (setq consult-preview-key 'any)
-  ;; (setq consult-preview-key "M-.")
-  ;; (setq consult-preview-key '("S-<down>" "S-<up>"))
-  ;; For some commands and buffer sources it is useful to configure the
-  ;; :preview-key on a per-command basis using the `consult-customize' macro.
   (consult-customize
    consult-theme :preview-key '(:debounce 0.2 any)
    consult-ripgrep consult-git-grep consult-grep
    consult-bookmark consult-recent-file consult-xref
    consult--source-bookmark consult--source-file-register
    consult--source-recent-file consult--source-project-recent-file
-   ;; :preview-key "M-."
    :preview-key '(:debounce 0.4 any))
 
-  ;; Optionally configure the narrowing key.
-  ;; Both < and C-+ work reasonably well.
-  (setq consult-narrow-key "<") ;; "C-+"
-
-  ;; Optionally make narrowing help available in the minibuffer.
-  ;; You may want to use `embark-prefix-help-command' or which-key instead.
-  ;; (define-key consult-narrow-map (vconcat consult-narrow-key "?") #'consult-narrow-help)
-
-  ;; By default `consult-project-function' uses `project-root' from project.el.
-  ;; Optionally configure a different project root function.
-  ;;;; 1. project.el (the default)
-  ;; (setq consult-project-function #'consult--default-project--function)
-  ;;;; 2. vc.el (vc-root-dir)
-  ;; (setq consult-project-function (lambda (_) (vc-root-dir)))
-  ;;;; 3. locate-dominating-file
-  ;; (setq consult-project-function (lambda (_) (locate-dominating-file "." ".git")))
-  ;;;; 4. projectile.el (projectile-project-root)
-  ;; (autoload 'projectile-project-root "projectile")
-  ;; (setq consult-project-function (lambda (_) (projectile-project-root)))
-  ;;;; 5. No project support
-  ;; (setq consult-project-function nil)
-)
+  (setq consult-narrow-key "<"))
 #+end_src
 
 ** consult-flycheck
@@ -1298,9 +1328,17 @@ Package-specific configurations.
 
 ** embark-consult
 #+begin_src emacs-lisp
-;; Consult users will also want the embark-consult package.
 (use-package embark-consult
   :straight (embark-consult :type git :host github :repo "oantolin/embark" :files ("embark-consult.el"))
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
+#+end_src
+
+** charm-freeze
+#+begin_src emacs-lisp
+(use-package charm-freeze
+  :straight (charm-freeze :type git :host codeberg :repo "godmaire/charm-freeze.el" :branch "main")
+  :custom
+  (charm-freeze-format "png")
+  (charm-freeze-theme "doom-one2"))
 #+end_src
